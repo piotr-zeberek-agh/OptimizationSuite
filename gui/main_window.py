@@ -15,34 +15,68 @@ class MainWindow(QMainWindow):
         self.layout = QVBoxLayout()
         self.central_widget.setLayout(self.layout)
 
-        self.set_base_layout()   
+        self.combo_box = QComboBox()
+        self.combo_box.addItem("Select Scenario")  # Option for null/empty state
+        self.combo_box.addItem("Structure Of Fullerenes")
+        self.combo_box.addItem("Portfolio Optimization")
+        self.combo_box.addItem("Gradient Descent")
+
+        self.set_base_layout()
+
+        # Initialize load_button to None
+        self.load_button = None
+
+        self.combo_box.currentTextChanged.connect(self.on_scenario_change)
 
     def set_base_layout(self):
+        """Sets up the base layout with combo box and table widget."""
+        # self.clear_layout()
+
+        # self.combo_box = QComboBox()
+        # self.combo_box.addItem("Select Scenario")  # Option for null/empty state
+        # self.combo_box.addItem("Structure Of Fullerenes")
+        # self.combo_box.addItem("Portfolio Optimization")
+        # self.combo_box.addItem("Gradient Descent")
+
+        self.layout.addWidget(self.combo_box)
+
+        # Initialize and add table widget
+        self.table_widget = QTableWidget()
+        self.layout.addWidget(self.table_widget)
+
+        # Initialize and add text box
+        self.text_box = QLineEdit()
+        self.layout.addWidget(self.text_box)
+
+    def on_scenario_change(self, selected_scenario: str):
+        """Handle the scenario selection event."""
+        print(f"Selected scenario: {selected_scenario}")
+
+        if selected_scenario == "Select Scenario":
+            return
+        
+        if self.combo_box.count() > 1 and self.combo_box.itemText(0) == "Select Scenario":
+            self.combo_box.removeItem(0)
+
+        # Usuń wszystkie widżety, w tym load_button, przed załadowaniem nowych
+        if self.load_button:
+            self.layout.removeWidget(self.load_button)
+            self.load_button.deleteLater()
+            self.load_button = None
+
         self.clear_layout()
         self.combo_box = QComboBox()
         self.combo_box.addItem("Structure Of Fullerenes")
         self.combo_box.addItem("Portfolio Optimization")
         self.combo_box.addItem("Gradient Descent")
-        self.combo_box.currentTextChanged.connect(self.on_scenario_selected)
-        self.table_widget = QTableWidget()
-        self.layout.addWidget(self.combo_box)
-        self.layout.addWidget(self.table_widget)
-    
-        self.text_box = QLineEdit()
-        self.layout.addWidget(self.text_box)
+        self.set_base_layout()
 
-        self.central_widget.setLayout(self.layout)
-
-    def on_scenario_selected(self, selected_scenario: str):
-        """Handle the scenario selection event."""
-        self.set_base_layout() 
-        # selected_scenario = self.combo_box.currentText() argument zamiast tego
-        if selected_scenario == "Structure Of Fullerenes":
-            pass
-        elif selected_scenario == "Portfolio Optimization":
+        if selected_scenario == "Portfolio Optimization":
             self.set_portfolio_view()
         elif selected_scenario == "Gradient Descent":
             self.set_gradient_descent_view()
+        elif selected_scenario == "Structure Of Fullerenes":
+            self.set_fullerenes_view()
 
     def clear_layout(self):
         """Clear all widgets in the current layout."""
@@ -50,23 +84,30 @@ class MainWindow(QMainWindow):
             widget = self.layout.itemAt(i).widget()
             if widget:
                 widget.deleteLater()
-                
+
+    # fulereny
+
+    def set_fullerenes_view(self):
+        """Set the view for the Structure Of Fullerenes scenario."""
+        self.setWindowTitle("Structure Of Fullerenes")    
+
+        # tracks option changes in the combo box
+        self.combo_box.currentTextChanged.connect(self.on_scenario_change)
+        
     # portfolio
 
     def set_portfolio_view(self):
         """Set the view for the Portfolio Optimization scenario."""
         self.setWindowTitle("Portfolio Optimization")
-        self.load_button = QPushButton("Load Data")
-        self.load_button.clicked.connect(self.load_csv("asset_data.csv"))
-        self.layout.addWidget(self.load_button)
-        # hide the load button when the scenario is changed
+
+        # tracks option changes in the combo box
         self.combo_box.currentTextChanged.connect(self.on_scenario_change)
-        self.central_widget.setLayout(self.layout)
 
-
-    def on_scenario_change(self, selected_scenario: str):
-        print(f"Selected scenario: {selected_scenario}")
-        self.load_button.hide()
+        # Create and add 'Load Data' button only if it doesn't already exist
+        if not self.load_button:
+            self.load_button = QPushButton("Load Data")
+            self.load_button.clicked.connect(lambda: self.load_csv("asset_data.csv"))
+            self.layout.addWidget(self.load_button)
 
     def load_csv(self, file_name: str):
         try:
@@ -85,17 +126,17 @@ class MainWindow(QMainWindow):
     # gradient
 
     def set_gradient_descent_view(self):
-        self.set_base_layout()
+        """Set the view for the Gradient Descent scenario."""
         self.setWindowTitle("Gradient Descent")
+
+        # tracks option changes in the combo box
+        self.combo_box.currentTextChanged.connect(self.on_scenario_change)
 
         # create table for variables
         self.table_widget.clear()
         self.table_widget.setColumnCount(2)
         self.table_widget.setHorizontalHeaderLabels(["Variable Name", "Value"])
         self.table_widget.setRowCount(3)
-
-        self.text_box = QLineEdit()
-        self.layout.addWidget(self.text_box)
 
         self.save_button = QPushButton("Save variables")
         self.save_button.clicked.connect(self.save_variables)
@@ -104,9 +145,6 @@ class MainWindow(QMainWindow):
         self.load_button = QPushButton("Load variables")
         # self.load_button.clicked.connect(self.) trzeba obsluzyc inne wczytanie, albo zapisac w .csv
         self.layout.addWidget(self.load_button)
-
-        self.combo_box.currentTextChanged.connect(self.on_scenario_change)
-        self.central_widget.setLayout(self.layout)
 
     def save_variables(self):
         variables = {}
