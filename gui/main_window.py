@@ -15,6 +15,15 @@ class MainWindow(QMainWindow):
         self.layout = QVBoxLayout()
         self.central_widget.setLayout(self.layout)
 
+        set_base_layout(self)   
+
+        # Initialize the load_button to None
+        self.load_button = None
+
+        self.combo_box.currentTextChanged.connect(self.on_scenario_selected)
+        self.central_widget.setLayout(self.layout)
+
+    def set_base_layout(self):
         self.combo_box = QComboBox()
         self.combo_box.addItem("Structure Of Fullerenes")
         self.combo_box.addItem("Portfolio Optimization")
@@ -24,29 +33,64 @@ class MainWindow(QMainWindow):
         self.table_widget = QTableWidget()
         self.layout.addWidget(self.combo_box)
         self.layout.addWidget(self.table_widget)
-        
+    
         self.text_box = QLineEdit()
         self.layout.addWidget(self.text_box)
 
-    def on_scenario_selected(self):
-        # Update view based on the selected scenario
-        selected_scenario = self.combo_box.currentText()
+    def on_scenario_selected(self, selected_scenario: str):
+        """Handle the scenario selection event."""
+        self.clear_layout()
+        # selected_scenario = self.combo_box.currentText() argument zamiast tego
         if selected_scenario == "Structure Of Fullerenes":
             pass
-            # self.set_fullerenes_view()
         elif selected_scenario == "Portfolio Optimization":
             self.set_portfolio_view()
         elif selected_scenario == "Gradient Descent":
             self.set_gradient_descent_view()
-            pass
+
+    def clear_layout(self):
+        """Clear all widgets in the current layout."""
+        for i in reversed(range(self.layout.count())):
+            widget = self.layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+                
+    # portfolio
 
     def set_portfolio_view(self):
+        """Set the view for the Portfolio Optimization scenario."""
         self.setWindowTitle("Portfolio Optimization")
         self.load_button = QPushButton("Load Data")
         self.load_button.clicked.connect(self.load_data)
         self.layout.addWidget(self.load_button)
+        # hide the load button when the scenario is changed
+        self.combo_box.currentTextChanged.connect(self.on_scenario_change)
+        self.central_widget.setLayout(self.layout)
+
+
+    def on_scenario_change(self, selected_scenario: str):
+        print(f"Selected scenario: {selected_scenario}")
+        self.load_button.hide()
+
+    def load_data(self):
+        try:
+            data = pd.read_csv("asset_data.csv")
+            self.table_widget.setRowCount(len(data))
+            self.table_widget.setColumnCount(len(data.columns))
+            self.table_widget.setHorizontalHeaderLabels(data.columns)
+
+            for row in range(len(data)):
+                for col in range(len(data.columns)):
+                    item = QTableWidgetItem(str(data.iloc[row, col]))
+                    self.table_widget.setItem(row, col, item)
+        except Exception as e:
+            print(f"Error loading data: {e}")
+
+    # gradient
 
     def set_gradient_descent_view(self):
+
+        self.clear_layout()
         self.setWindowTitle("Gradient Descent")
 
         # create table for variables
@@ -54,6 +98,9 @@ class MainWindow(QMainWindow):
         self.table_widget.setColumnCount(2)
         self.table_widget.setHorizontalHeaderLabels(["Variable Name", "Value"])
         self.table_widget.setRowCount(3)
+
+        self.text_box = QLineEdit()
+        self.layout.addWidget(self.text_box)
 
         self.load_button = QPushButton("Save variables")
         self.load_button.clicked.connect(self.save_variables)
@@ -78,21 +125,6 @@ class MainWindow(QMainWindow):
             self.text_box.setText(repr(variables))
         except Exception as e:
             print(f"Error saving variables: {e}")
-
-
-    def load_data(self):
-        try:
-            data = pd.read_csv("asset_data.csv")
-            self.table_widget.setRowCount(len(data))
-            self.table_widget.setColumnCount(len(data.columns))
-            self.table_widget.setHorizontalHeaderLabels(data.columns)
-
-            for row in range(len(data)):
-                for col in range(len(data.columns)):
-                    item = QTableWidgetItem(str(data.iloc[row, col]))
-                    self.table_widget.setItem(row, col, item)
-        except Exception as e:
-            print(f"Error loading data: {e}")
 
         # test code
 
