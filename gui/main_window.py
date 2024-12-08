@@ -25,19 +25,11 @@ class MainWindow(QMainWindow):
 
         # Initialize load_button to None
         self.load_button = None
-
+        
         self.combo_box.currentTextChanged.connect(self.on_scenario_change)
 
     def set_base_layout(self):
         """Sets up the base layout with combo box and table widget."""
-        # self.clear_layout()
-
-        # self.combo_box = QComboBox()
-        # self.combo_box.addItem("Select Scenario")  # Option for null/empty state
-        # self.combo_box.addItem("Structure Of Fullerenes")
-        # self.combo_box.addItem("Portfolio Optimization")
-        # self.combo_box.addItem("Gradient Descent")
-
         self.layout.addWidget(self.combo_box)
 
         # Initialize and add table widget
@@ -52,12 +44,6 @@ class MainWindow(QMainWindow):
         """Handle the scenario selection event."""
         print(f"Selected scenario: {selected_scenario}")
 
-        if selected_scenario == "Select Scenario":
-            return
-        
-        if self.combo_box.count() > 1 and self.combo_box.itemText(0) == "Select Scenario":
-            self.combo_box.removeItem(0)
-
         # Usuń wszystkie widżety, w tym load_button, przed załadowaniem nowych
         if self.load_button:
             self.layout.removeWidget(self.load_button)
@@ -66,17 +52,22 @@ class MainWindow(QMainWindow):
 
         self.clear_layout()
         self.combo_box = QComboBox()
-        self.combo_box.addItem("Structure Of Fullerenes")
-        self.combo_box.addItem("Portfolio Optimization")
-        self.combo_box.addItem("Gradient Descent")
+
+        self.scenario = {"Structure Of Fullerenes", "Portfolio Optimization", "Gradient Descent"}
+
+        self.cb_list = [selected_scenario] + sorted(self.scenario - {selected_scenario})
+        self.combo_box.addItems(self.cb_list)
+
         self.set_base_layout()
 
-        if selected_scenario == "Portfolio Optimization":
+        if selected_scenario == "Select Scenario":
+            return
+        elif selected_scenario == "Structure Of Fullerenes":
+            self.set_fullerenes_view()
+        elif selected_scenario == "Portfolio Optimization":
             self.set_portfolio_view()
         elif selected_scenario == "Gradient Descent":
             self.set_gradient_descent_view()
-        elif selected_scenario == "Structure Of Fullerenes":
-            self.set_fullerenes_view()
 
     def clear_layout(self):
         """Clear all widgets in the current layout."""
@@ -93,7 +84,7 @@ class MainWindow(QMainWindow):
 
         # tracks option changes in the combo box
         self.combo_box.currentTextChanged.connect(self.on_scenario_change)
-        
+
     # portfolio
 
     def set_portfolio_view(self):
