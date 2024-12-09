@@ -1,17 +1,27 @@
 from PyQt6.QtWidgets import QLabel, QFrame, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QLineEdit
 from PyQt6.QtGui import QFont
+from default_scenarios import (gradient_descent, fullerenes_structure, portfolio_optimization)
+
+DEFAULT_SCENARIO_CLASSES = {
+    "Gradient Descent": gradient_descent.GradientDescentScenario,
+    "Structure Of Fullerenes": fullerenes_structure.FullerenesStructureScenario,
+    "Portfolio Optimization": portfolio_optimization.PortfolioOptimizationScenario
+}
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        self.current_scenario = None
+        self.scenario_classes = DEFAULT_SCENARIO_CLASSES
+        self.imported_scenario_classes = {}
+        
         self.set_base_layout()
-        self.combo_box.setCurrentIndex(-1)
+        self.scenario_combo_box.setCurrentIndex(-1)
         # tracks option changes in the combo box
-        self.combo_box.currentTextChanged.connect(self.on_scenario_change)
+        self.scenario_combo_box.currentTextChanged.connect(self.on_scenario_change)
 
-    def set_base_layout(self, selected_scenario = None):
-        """Sets up the base layout with combo box and table widget."""
+    def set_base_layout(self):
+        """Sets up the base layout with scenario label and combo box and combo box."""
 
         self.setWindowTitle("Optimization Suite")
         self.setGeometry(100, 100, 600, 400)
@@ -19,72 +29,77 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
-        self.layout = QVBoxLayout()
-        self.titlehbox = QHBoxLayout()
+        self.scenario_choosing_layout = QHBoxLayout()
         
-        title_label = QLabel("Simulated annealing")
-        title_label.setFixedWidth(250)
-        font = QFont("Arial", 18, QFont.Weight.Bold)
-        title_label.setFont(font)
-        self.titlehbox.addWidget(title_label)
+        self.scenario_label = QLabel("Choose scenario")
+        self.scenario_label.setFixedWidth(250)
+        font = QFont("Arial", 16, QFont.Weight.Bold)
+        self.scenario_label.setFont(font)
+        self.scenario_choosing_layout.addWidget(self.scenario_label)
 
+        # not necessary
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
-        self.titlehbox.addWidget(line)
+        self.scenario_choosing_layout.addWidget(line)
 
-        self.combo_box = QComboBox()
-        self.scenario = {"Structure Of Fullerenes", "Portfolio Optimization", "Gradient Descent"}
+        self.scenario_combo_box = QComboBox()
+        self.scenario_combo_box.addItems(self.scenario_classes.keys())
+        # if selected_scenario is None:
+        #     cb_list = sorted(self.scenarios)
+        #     self.combo_box.addItems(cb_list)
+        # else:
+        #     cb_list = [selected_scenario] + sorted(self.scenarios - {selected_scenario})
+        #     self.combo_box.addItems(cb_list)
+            
+        self.scenario_choosing_layout.addWidget(self.scenario_combo_box)
         
-        if selected_scenario is None:
-            cb_list = sorted(self.scenario)
-            self.combo_box.addItems(cb_list)
-        else:
-            cb_list = [selected_scenario] + sorted(self.scenario - {selected_scenario})
-            self.combo_box.addItems(cb_list)
+        # modified by scenario
+        self.scenario_input_layout = QVBoxLayout()
+        self.scenario_input_layout.addWidget(QTableWidget())
+        
+        self.window_layout = QVBoxLayout()
 
-        self.titlehbox.addWidget(self.combo_box)
+        self.window_layout.addLayout(self.scenario_choosing_layout)
+        self.window_layout.addLayout(self.scenario_input_layout)
+        
 
-        self.layout.addLayout(self.titlehbox)
+        # self.table_widget = QTableWidget()
+        # self.layout.addWidget(self.table_widget)
 
-        self.table_widget = QTableWidget()
-        self.layout.addWidget(self.table_widget)
+        # self.text_box = QLineEdit()
+        # self.layout.addWidget(self.text_box)
 
-        self.text_box = QLineEdit()
-        self.layout.addWidget(self.text_box)
+        self.central_widget.setLayout(self.window_layout)
 
-        self.central_widget.setLayout(self.layout)
 
-    def clear_layout(self):
-        """Clear all widgets in the current layout."""
-        for i in reversed(range(self.layout.count())):
-            widget = self.layout.itemAt(i).widget()
-            if widget:
-                widget.deleteLater()
 
-    def on_scenario_change(self, selected_scenario: str):
+    def on_scenario_change(self):
         """Handle the scenario selection event."""
-        print(f"Selected scenario: {selected_scenario}")
+        scenario_name = self.scenario_combo_box.currentText()
+        self.scenario_label.setText(scenario_name)
+        self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
+        # print(f"Selected scenario: {selected_scenario}")
 
-        self.clear_layout()
-        self.set_base_layout(selected_scenario)
-        self.combo_box.currentTextChanged.connect(self.on_scenario_change)
+        # self.clear_layout()
+        # self.set_base_layout(selected_scenario)
+        # self.combo_box.currentTextChanged.connect(self.on_scenario_change)
 
-        if selected_scenario == "Structure Of Fullerenes":
-            self.setup_fullerenes()
-        elif selected_scenario == "Portfolio Optimization":
-            self.setup_portfolio()
-        elif selected_scenario == "Gradient Descent":
-            self.setup_gradient()
+        # if selected_scenario == "Structure Of Fullerenes":
+        #     self.setup_fullerenes()
+        # elif selected_scenario == "Portfolio Optimization":
+        #     self.setup_portfolio()
+        # elif selected_scenario == "Gradient Descent":
+        #     self.setup_gradient()
 
     def setup_fullerenes(self):
         """Set up the Structure Of Fullerenes scenario."""
-        from algorithms.structure_of_fullerenes import set_fullerenes_view
+        from default_scenarios.fullerenes_structure import set_fullerenes_view
         set_fullerenes_view(self)
 
     def setup_portfolio(self):
         """Set up the Portfolio Optimization scenario."""
-        from algorithms.portfolio_optimization import PortfolioOptimization
+        from default_scenarios.portfolio_optimization import PortfolioOptimization
 
         portfel_1 = PortfolioOptimization(self)
         # portfel_1.optimize()
@@ -92,5 +107,9 @@ class MainWindow(QMainWindow):
 
     def setup_gradient(self):
         """Set up the Gradient Descent scenario."""
-        from algorithms.gradient_descent import set_gradient_descent_view
-        set_gradient_descent_view(self)    
+        # from scenarios.gradient_descent import set_gradient_descent_view
+        # set_gradient_descent_view(self)    
+        from default_scenarios.gradient_descent import GradientDescentScenario
+        self.current_scenario = GradientDescentScenario(self)
+        self.current_scenario.set_window_layout()
+        
