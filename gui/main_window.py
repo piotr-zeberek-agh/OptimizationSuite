@@ -84,8 +84,11 @@ class MainWindow(QMainWindow):
 
     def setup_portfolio(self):
         """Set up the Portfolio Optimization scenario."""
-        from algorithms.portfolio_optimization import set_portfolio_view
-        set_portfolio_view(self)
+        from algorithms.portfolio_optimization import PortfolioOptimization
+
+        portfel_1 = PortfolioOptimization(self)
+        # portfel_1.optimize()
+        # portfel_1.display()
 
     def setup_gradient(self):
         """Set up the Gradient Descent scenario."""

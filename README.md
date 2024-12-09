@@ -1,4 +1,4 @@
-# Optimization Suite in Python
+# Optimization Suite in Python (Simulated annealing)
 
 ## Team
 - Piotr Żeberek (team leder)
