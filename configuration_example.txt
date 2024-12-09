@@ -1,0 +1,11 @@
+{
+    "temperature_initial": 1000,
+    "temperature_min": 0.001,
+    "cooling_schedule": "geometric",
+    "alpha": 0.9,
+    "iterations_per_temp": 100,
+    "max_steps": 10000,
+    "neighbor_function": "swap",
+    "acceptance_probability_function": "boltzmann",
+    "log_file": "annealing_log.txt"
+}
