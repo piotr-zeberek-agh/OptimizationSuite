@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QLabel, QFrame, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QLineEdit
+from PyQt6.QtWidgets import QLabel, QFrame, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QPushButton
 from PyQt6.QtGui import QFont
 from default_scenarios import (gradient_descent, fullerenes_structure, portfolio_optimization)
 
@@ -63,6 +63,9 @@ class MainWindow(QMainWindow):
         self.window_layout.addLayout(self.scenario_choosing_layout)
         self.window_layout.addLayout(self.scenario_input_layout)
         
+        self.run_button = QPushButton()
+        self.run_button.setText("Run")
+        self.window_layout.addWidget(self.run_button)
 
         # self.table_widget = QTableWidget()
         # self.layout.addWidget(self.table_widget)
@@ -79,6 +82,7 @@ class MainWindow(QMainWindow):
         scenario_name = self.scenario_combo_box.currentText()
         self.scenario_label.setText(scenario_name)
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
+        self.run_button.clicked.connect(self.current_scenario.run)
         # print(f"Selected scenario: {selected_scenario}")
 
         # self.clear_layout()

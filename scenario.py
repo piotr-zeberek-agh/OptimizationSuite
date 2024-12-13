@@ -10,6 +10,10 @@ class Scenario(ABC):
     def adjust_layout(self):
         pass
     
+    @abstractmethod
+    def run(self):
+        pass
+    
     def clear_layout(self):
         """Clear all widgets in the current layout."""
         for i in reversed(range(self.layout.count())):

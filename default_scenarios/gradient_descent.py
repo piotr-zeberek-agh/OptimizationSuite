@@ -49,12 +49,6 @@ class GradientDescentScenario(Scenario):
 
         self.layout.addWidget(self.var_table)
 
-        self.run_button = QPushButton()
-        self.run_button.setText("Run")
-        self.run_button.clicked.connect(self.run)
-
-        self.layout.addWidget(self.run_button)
-
     def on_var_count_change(self):
         row_count = self.var_table.rowCount()
         spin_box_val = self.var_count_spin_box.value()
