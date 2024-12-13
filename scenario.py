@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 class Scenario(ABC):
     def __init__(self, layout):
         self.layout = layout
+        self.clear_layout()
     
     @abstractmethod
     def adjust_layout(self):

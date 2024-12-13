@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         """Sets up the base layout with scenario label and combo box and combo box."""
 
         self.setWindowTitle("Optimization Suite")
-        self.setGeometry(100, 100, 1000, 600)
+        self.setGeometry(100, 100, 1000, 400)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -37,7 +37,6 @@ class MainWindow(QMainWindow):
         self.scenario_label.setFont(font)
         self.scenario_choosing_layout.addWidget(self.scenario_label)
 
-        # not necessary
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
@@ -45,13 +44,6 @@ class MainWindow(QMainWindow):
 
         self.scenario_combo_box = QComboBox()
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
-        # if selected_scenario is None:
-        #     cb_list = sorted(self.scenarios)
-        #     self.combo_box.addItems(cb_list)
-        # else:
-        #     cb_list = [selected_scenario] + sorted(self.scenarios - {selected_scenario})
-        #     self.combo_box.addItems(cb_list)
-            
         self.scenario_choosing_layout.addWidget(self.scenario_combo_box)
         
         # modified by scenario
@@ -75,58 +67,25 @@ class MainWindow(QMainWindow):
 
         self.central_widget.setLayout(self.window_layout)
 
-
-
     def on_scenario_change(self):
         """Handle the scenario selection event."""
         scenario_name = self.scenario_combo_box.currentText()
         self.scenario_label.setText(scenario_name)
-        
-#         Traceback (most recent call last):
-#   File "/home/fedora/Programming/Python-In-the-Enterprise/SimulatedAnnealingSuite/gui/main_window.py", line 84, in on_scenario_change
-#     self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
-#                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# TypeError: Can't instantiate abstract class PortfolioOptimizationScenario without an implementation for abstract method 'run'
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
-
-
-
         self.run_button.clicked.connect(self.current_scenario.run)
-        # print(f"Selected scenario: {selected_scenario}")
-
-        # self.clear_layout()
-        # self.set_base_layout(selected_scenario)
-        # self.combo_box.currentTextChanged.connect(self.on_scenario_change)
-
-        # if selected_scenario == "Structure Of Fullerenes":
-        #     self.setup_fullerenes()
-        # elif selected_scenario == "Portfolio Optimization":
-        #     self.setup_portfolio()
-        # elif selected_scenario == "Gradient Descent":
-        #     self.setup_gradient()
 
     def setup_fullerenes(self):
         """Set up the Structure Of Fullerenes scenario."""
-        from default_scenarios.fullerenes_structure import set_fullerenes_view
-        set_fullerenes_view(self)
+        from default_scenarios.fullerenes_structure import FullerenesStructureScenario
+        # self.current_scenario = FullerenesStructureScenario(self)
 
     def setup_portfolio(self):
         """Set up the Portfolio Optimization scenario."""
-        from default_scenarios.portfolio_optimization import PortfolioOptimization
-        self.current_scenario = PortfolioOptimization(self)
-
-        # self.current_scenario.set_window_layout()
-        # portfel_1 = PortfolioOptimization(self)
-
-        # portfel_1.optimize()
-        # portfel_1.display()
+        from default_scenarios.portfolio_optimization import PortfolioOptimizationScenario
+        self.current_scenario = PortfolioOptimizationScenario(self)
 
     def setup_gradient(self):
         """Set up the Gradient Descent scenario."""
-        # from scenarios.gradient_descent import set_gradient_descent_view
-        # set_gradient_descent_view(self)    
         from default_scenarios.gradient_descent import GradientDescentScenario
         self.current_scenario = GradientDescentScenario(self)
-        # self.current_scenario.set_window_layout()
-        # self.current_scenario.adjust_layout()
         

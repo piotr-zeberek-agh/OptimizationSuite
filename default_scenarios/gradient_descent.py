@@ -23,7 +23,6 @@ class GradientDescentScenario(Scenario):
         self.adjust_layout()
 
     def adjust_layout(self):
-        self.clear_layout()
         self.var_count_label = QLabel("No. independent variables: ")
 
         self.var_count_spin_box = QSpinBox()
