@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from PyQt6.QtGui import QFont
 
 class Scenario(ABC):
     def __init__(self, layout):

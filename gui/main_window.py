@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QLabel, QFrame, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QPushButton
-from PyQt6.QtGui import QFont
 from default_scenarios import (gradient_descent, fullerenes_structure, portfolio_optimization)
+from PyQt6.QtGui import QFont
 
 DEFAULT_SCENARIO_CLASSES = {
     "Gradient Descent": gradient_descent.GradientDescentScenario,
@@ -32,10 +32,12 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout = QHBoxLayout()
         
         self.scenario_label = QLabel("Choose scenario")
-        self.scenario_label.setFixedWidth(250)
+        self.scenario_label.setFixedWidth(310)
         font = QFont("Arial", 16, QFont.Weight.Bold)
         self.scenario_label.setFont(font)
         self.scenario_choosing_layout.addWidget(self.scenario_label)
+        self.scenario_choosing_layout.setContentsMargins(0, 0, 0, 0)
+        self.scenario_choosing_layout.setSpacing(5)
 
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)
