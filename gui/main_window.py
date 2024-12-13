@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         """Sets up the base layout with scenario label and combo box and combo box."""
 
         self.setWindowTitle("Optimization Suite")
-        self.setGeometry(100, 100, 1000, 400)
+        self.setGeometry(100, 100, 1000, 600)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)

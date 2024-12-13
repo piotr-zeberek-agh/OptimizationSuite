@@ -8,51 +8,35 @@ class PortfolioOptimizationScenario(Scenario):
         super().__init__(layout)
         
         self.adjust_layout()
-
-        # tracks option changes in the combo box
-        # self.scenario_combo_box.currentTextChanged.connect(self.on_scenario_change)
-
+        
 
     def adjust_layout(self):
         """Adjusts the layout to include elements for portfolio optimization."""
-        
-        # layout.setGeometry(100, 100, 1000, 600)
 
-        main_layout = QHBoxLayout()
+        # its because self.layout is a QVBoxLayout
+        self.main_window = QHBoxLayout()
 
-        self.layout.addLayout(main_layout)
+        # self.layout = QHBoxLayout()
 
+        self.left_layout = QVBoxLayout()
+        self.portfolio_table = QTableWidget()
+        self.portfolio_table.setRowCount(5)
+        self.portfolio_table.setColumnCount(3)
+        self.portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Expected Return", "Risk Level"])
+        self.left_layout.addWidget(self.portfolio_table)
+        self.run_button = QPushButton("Optimize Portfolio")
+        self.left_layout.addWidget(self.run_button)
+        self.main_window.addLayout(self.left_layout)
 
-        # left_layout = QVBoxLayout()
+        self.right_layout = QVBoxLayout()
+        self.chart_widget = PortfolioChartWidget()
+        self.right_layout.addWidget(self.chart_widget)
+        self.main_window.addLayout(self.right_layout)
 
-        # portfolio_table = QTableWidget()
-        # portfolio_table.setRowCount(5)
-        # portfolio_table.setColumnCount(3)
-        # portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Expected Return", "Risk Level"])
-        # left_layout.addWidget(portfolio_table)
+        self.layout.addLayout(self.main_window)
 
-        # # Add run button
-        # run_button = QPushButton("Optimize Portfolio")
-        # left_layout.addWidget(run_button)
-
-        # # Add the left layout to the main layout (left part of the window)
-        # main_layout.addLayout(left_layout)
-
-        # # Create a layout for the chart (right side)
-        # right_layout = QVBoxLayout()
-
-        # # Add chart widget for visualization
-        # chart_widget = PortfolioChartWidget()
-        # right_layout.addWidget(chart_widget)
-
-        # # Add the right layout to the main layout (right part of the window)
-        # main_layout.addLayout(right_layout)
-
-        # # Connect the run button to update the chart
         # run_button.clicked.connect(lambda: self.run(portfolio_table, chart_widget))
 
-        # # Set the layout for the parent widget
-        # self.layout.addLayout(main_layout)
 
     def run(self, portfolio_table, chart_widget):
         """Simulates portfolio optimization and updates the chart."""
