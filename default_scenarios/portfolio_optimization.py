@@ -52,7 +52,7 @@ class PortfolioOptimizationScenario(Scenario):
         run_button.clicked.connect(lambda: self.run(portfolio_table, chart_widget))
 
         # Set the layout for the parent widget
-        self.parent_widget.setLayout(main_layout)
+        self.layout.addLayout(main_layout)
 
     def run(self, portfolio_table, chart_widget):
         """Simulates portfolio optimization and updates the chart."""
