@@ -1,53 +1,84 @@
 from scenario import Scenario
-from PyQt6.QtWidgets import QPushButton, QTableWidgetItem, QTableWidget
-import pandas as pd
-import yfinance as yf
+from PyQt6.QtWidgets import QVBoxLayout, QLabel, QTableWidget, QPushButton, QHBoxLayout, QWidget
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 class PortfolioOptimizationScenario(Scenario):
     def __init__(self, layout):
         super().__init__(layout)
-        self.data = None
-        self.isDataLoaded = False
         
+        self.adjust_layout()
+
     def adjust_layout(self):
-        """Set the view for the Structure of Fullerenes scenario"""
-        # self.window.tit("Gradient Descent")
+        """Adjusts the layout to include elements for portfolio optimization."""
+        self.clear_layout()
 
-        # create table for variables
-        self.table_widget = QTableWidget()
-        self.table_widget.setColumnCount(2)
-        self.table_widget.setHorizontalHeaderLabels(["Variable Name", "Value"])
-        self.table_widget.setRowCount(8)
+        # Create a main horizontal layout
+        main_layout = QHBoxLayout()
 
-        self.layout.addWidget(self.table_widget)
+        # Create a vertical layout for the left side (table and button)
+        left_layout = QVBoxLayout()
 
-        
-# # ---------------------- Main Method -------------------
-#     def anneal(self):
-#         # Add your simulated annealing code here
-#         print("Simulated annealing code goes here...")
-# # ---------------------- GUI code -------------------
+        # Add title
+        title_label = QLabel("Portfolio Optimization")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        left_layout.addWidget(title_label)
 
-#     def set_portfolio_view(self, window):
-#         """Set the view for the Portfolio Optimization scenario."""
-#         window.setWindowTitle("Portfolio Optimization")
+        # Add table for portfolio details
+        portfolio_table = QTableWidget()
+        portfolio_table.setRowCount(5)  # Example row count
+        portfolio_table.setColumnCount(3)
+        portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Expected Return", "Risk Level"])
+        left_layout.addWidget(portfolio_table)
 
-#         window.load_button = QPushButton("Load Data")
-#         # window.load_button.clicked.connect(lambda: self.load_csv(window, "asset_data.csv"))
-#         window.load_button.clicked.connect(lambda: self.load_csv(window, "data/asset_data.csv"))
-#         window.layout.addWidget(window.load_button)
+        # Add run button
+        run_button = QPushButton("Optimize Portfolio")
+        left_layout.addWidget(run_button)
 
-#         window.save_button = QPushButton("Save Data")
-#         window.save_button.clicked.connect(
-#             lambda: self.save_csv(self.data, "data/new_data.csv") if self.isDataLoaded else print("No data loaded!"))
-#         window.layout.addWidget(window.save_button)
+        # Add the left layout to the main layout (left part of the window)
+        main_layout.addLayout(left_layout)
 
-#         window.down_button = QPushButton("Download Data")
-#         window.down_button.clicked.connect(lambda: self.download_data())
-#         window.layout.addWidget(window.down_button)
+        # Create a layout for the chart (right side)
+        right_layout = QVBoxLayout()
 
-# # ---------------------- Data -------------------
+        # Add chart widget for visualization
+        chart_widget = PortfolioChartWidget()
+        right_layout.addWidget(chart_widget)
 
+        # Add the right layout to the main layout (right part of the window)
+        main_layout.addLayout(right_layout)
+
+        # Connect the run button to update the chart
+        run_button.clicked.connect(lambda: self.run(portfolio_table, chart_widget))
+
+        # Set the layout for the parent widget
+        self.parent_widget.setLayout(main_layout)
+
+    def run(self, portfolio_table, chart_widget):
+        """Simulates portfolio optimization and updates the chart."""
+
+
+class PortfolioChartWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.canvas)
+        self.setLayout(layout)
+
+    def update_chart(self, data):
+        """Update the pie chart with new data."""
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        ax.pie(data.values(), labels=data.keys(), autopct='%1.1f%%', startangle=90)
+        ax.set_title("Portfolio Distribution")
+        self.canvas.draw()
+
+
+# # ---------------------- Data ------------------
 
 #     def download_data(self):
 #         self.tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "SPY", "BABA"]
@@ -80,45 +111,3 @@ class PortfolioOptimizationScenario(Scenario):
 #                     window.table_widget.setItem(row, col, item)
 #         except Exception as e:
 #             print(f"Error loading data: {e}")
-
-
-
-
-
-
-
-
-
-
-
-#     def load_data(self, file_name: str):
-#         try:
-#             self.data = pd.read_csv(file_name)
-#         except Exception as e:
-#             print(f"Error loading data: {e}")
-    
-#     def optimize(self):
-#         if self.data is None:
-#             print("No data loaded!")
-#             return
-        
-#         # Add your optimization code here
-#         print("Optimization code goes here...")
-
-#     def save_results(self, file_name: str):
-#         # Add your code to save the results
-#         print(f"Results saved in {file_name}")
-
-#     def display_results(self):
-#         # Add your code to display the results
-#         print("Displaying results...")
-
-#     def run(self):
-#         self.optimize()
-#         self.display_results()
-
-
-
-
-
-

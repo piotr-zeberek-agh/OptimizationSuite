@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         """Sets up the base layout with scenario label and combo box and combo box."""
 
         self.setWindowTitle("Optimization Suite")
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 1000, 600)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -81,7 +81,16 @@ class MainWindow(QMainWindow):
         """Handle the scenario selection event."""
         scenario_name = self.scenario_combo_box.currentText()
         self.scenario_label.setText(scenario_name)
+        
+#         Traceback (most recent call last):
+#   File "/home/fedora/Programming/Python-In-the-Enterprise/SimulatedAnnealingSuite/gui/main_window.py", line 84, in on_scenario_change
+#     self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
+#                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# TypeError: Can't instantiate abstract class PortfolioOptimizationScenario without an implementation for abstract method 'run'
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
+
+
+
         self.run_button.clicked.connect(self.current_scenario.run)
         # print(f"Selected scenario: {selected_scenario}")
 
@@ -104,8 +113,11 @@ class MainWindow(QMainWindow):
     def setup_portfolio(self):
         """Set up the Portfolio Optimization scenario."""
         from default_scenarios.portfolio_optimization import PortfolioOptimization
+        self.current_scenario = PortfolioOptimization(self)
 
-        portfel_1 = PortfolioOptimization(self)
+        # self.current_scenario.set_window_layout()
+        # portfel_1 = PortfolioOptimization(self)
+
         # portfel_1.optimize()
         # portfel_1.display()
 
@@ -115,5 +127,6 @@ class MainWindow(QMainWindow):
         # set_gradient_descent_view(self)    
         from default_scenarios.gradient_descent import GradientDescentScenario
         self.current_scenario = GradientDescentScenario(self)
-        self.current_scenario.set_window_layout()
+        # self.current_scenario.set_window_layout()
+        # self.current_scenario.adjust_layout()
         
