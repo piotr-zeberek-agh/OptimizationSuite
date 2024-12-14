@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         """Sets up the base layout with scenario label and combo box and combo box."""
 
         self.setWindowTitle("Optimization Suite")
-        self.setGeometry(100, 100, 1000, 600)
+        self.setGeometry(100, 100, 200, 100)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -39,43 +39,32 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout.setContentsMargins(0, 0, 0, 0)
         self.scenario_choosing_layout.setSpacing(5)
 
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.VLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        self.scenario_choosing_layout.addWidget(line)
+        # line = QFrame()
+        # line.setFrameShape(QFrame.Shape.VLine)
+        # line.setFrameShadow(QFrame.Shadow.Sunken)
+        # self.scenario_choosing_layout.addWidget(line)
 
         self.scenario_combo_box = QComboBox()
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
         self.scenario_choosing_layout.addWidget(self.scenario_combo_box)
         
-        # line
-        hline = QFrame()
-        hline.setFrameShape(QFrame.Shape.HLine)
-        hline.setFrameShadow(QFrame.Shadow.Sunken)
-
         self.window_layout = QVBoxLayout()
         self.window_layout.addLayout(self.scenario_choosing_layout)
-        self.window_layout.addWidget(hline)
+       
+        # hline = QFrame()
+        # hline.setFrameShape(QFrame.Shape.HLine)
+        # hline.setFrameShadow(QFrame.Shadow.Sunken)
+        # self.window_layout.addWidget(hline)
 
         # modified by scenario
         self.scenario_input_layout = QVBoxLayout()
         self.scenario_input_layout.addWidget(QTableWidget())
-
         self.window_layout.addLayout(self.scenario_input_layout)
         
-        # czy potrzebny przycisk w domyslnym oknie?
-
-        # self.run_button = QPushButton()
-        # self.run_button.setText("Run")
-        # self.window_layout.addWidget(self.run_button)
-
-
-
-        # self.table_widget = QTableWidget()
-        # self.layout.addWidget(self.table_widget)
-
-        # self.text_box = QLineEdit()
-        # self.layout.addWidget(self.text_box)
+        #### czy potrzebny przycisk w domyslnym oknie? #####
+        self.run_button = QPushButton()
+        self.run_button.setText("Run")
+        self.window_layout.addWidget(self.run_button)
 
         self.central_widget.setLayout(self.window_layout)
 
