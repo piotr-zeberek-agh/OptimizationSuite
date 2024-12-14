@@ -48,18 +48,28 @@ class MainWindow(QMainWindow):
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
         self.scenario_choosing_layout.addWidget(self.scenario_combo_box)
         
+        # line
+        hline = QFrame()
+        hline.setFrameShape(QFrame.Shape.HLine)
+        hline.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.window_layout = QVBoxLayout()
+        self.window_layout.addLayout(self.scenario_choosing_layout)
+        self.window_layout.addWidget(hline)
+
         # modified by scenario
         self.scenario_input_layout = QVBoxLayout()
         self.scenario_input_layout.addWidget(QTableWidget())
-        
-        self.window_layout = QVBoxLayout()
 
-        self.window_layout.addLayout(self.scenario_choosing_layout)
         self.window_layout.addLayout(self.scenario_input_layout)
         
-        self.run_button = QPushButton()
-        self.run_button.setText("Run")
-        self.window_layout.addWidget(self.run_button)
+        # czy potrzebny przycisk w domyslnym oknie?
+
+        # self.run_button = QPushButton()
+        # self.run_button.setText("Run")
+        # self.window_layout.addWidget(self.run_button)
+
+
 
         # self.table_widget = QTableWidget()
         # self.layout.addWidget(self.table_widget)
