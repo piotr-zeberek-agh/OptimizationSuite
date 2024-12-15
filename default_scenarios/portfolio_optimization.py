@@ -1,19 +1,24 @@
 from scenario import Scenario
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QVBoxLayout, QDialogButtonBox, QDialog, QTableWidgetItem, QListWidget, QFrame, QLabel, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QListWidgetItem, QDialogButtonBox, QDialog, QTableWidgetItem, QListWidget, QFrame, QLabel, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from PyQt6.QtGui import QFont
+import json
 
 class PortfolioOptimizationScenario(Scenario):
     def __init__(self, layout):
         super().__init__(layout)
-        
         self.adjust_layout()
 
         # self.my_run_button.clicked.connect(lambda: self.run(portfolio_table, chart_widget))
         # self.select_assets_button.clicked.connect(self.open_asset_selection_dialog)
-
+    
+    def run(self, portfolio_table, chart_widget):
+        """Simulates portfolio optimization and updates the chart."""
+        self.start_date = self.end_date_line.text()
+        self.end_date = self.end_date_line.text()
+        self.budget = self.budget_line.text()
 
     def adjust_layout(self):
         """Adjusts the layout to include elements for portfolio optimization."""
@@ -26,12 +31,6 @@ class PortfolioOptimizationScenario(Scenario):
         self.left_layout = QVBoxLayout()
         self.left_layout.setContentsMargins(0, 0, 0, 0)
         self.left_layout.setSpacing(10)
-
-        # self.portfolio_table = QTableWidget()
-        # self.portfolio_table.setRowCount(5)
-        # self.portfolio_table.setColumnCount(3)
-        # self.portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Expected Return", "Risk Level"])
-        # self.left_layout.addWidget(self.portfolio_table)
 
         self.row_1 = QHBoxLayout()
         # self.row_1.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -66,7 +65,6 @@ class PortfolioOptimizationScenario(Scenario):
         self.start_date_line = QLineEdit()
         self.start_date_line.setPlaceholderText("Start (YYYY-MM-DD)")
         self.row_4.addWidget(self.start_date_line)
-
         self.end_date_line = QLineEdit()
         self.end_date_line.setPlaceholderText("End (YYYY-MM-DD)")
         self.row_4.addWidget(self.end_date_line)
@@ -138,24 +136,21 @@ class PortfolioOptimizationScenario(Scenario):
         self.row_7.addWidget(self.budget_line)
         self.left_layout.addLayout(self.row_7)
 
+#############################################
+        self.selected_list = QListWidget()
+        self.left_layout.addWidget(QLabel("Selected Options:"))
+        self.left_layout.addWidget(self.selected_list)
 
-        label = QLabel("Select assets:")
-        self.left_layout.addWidget(label)
+        self.open_dialog_button = QPushButton("Open Selection Window")
+        self.open_dialog_button.clicked.connect(self.open_selection_window)
+        self.left_layout.addWidget(self.open_dialog_button)
 
-        self.add_button = QPushButton("Add Selected Assets")
-        self.add_button.clicked.connect(self.add_selected_assets)
-        self.left_layout.addWidget(self.add_button)
-
-        self.selected_assets_list = QListWidget()  # Tworzymy listę do przechowywania wybranych aktywów
-        self.selected_assets_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
-        self.left_layout.addWidget(self.selected_assets_list)
-
-
+ #############################################
         # Button "Run"
-        self.my_run_button = QPushButton()
-        self.my_run_button.setText("Run")
-        self.left_layout.addWidget(self.my_run_button)
-        self.my_run_button.clicked.connect(self.run)
+        # self.my_run_button = QPushButton()
+        # self.my_run_button.setText("Run")
+        # self.left_layout.addWidget(self.my_run_button)
+        # self.my_run_button.clicked.connect(self.run)
 
         # Middle line
 
@@ -194,99 +189,79 @@ class PortfolioOptimizationScenario(Scenario):
         # Sekcja ograniczeń portfela:
         # Tolerancja ryzyka, minimalny/oczekiwany zwrot, maksymalny drawdown, liczba aktywów, budżet.
 
-        
 
 
+    def open_selection_window(self):
+        dialog = SelectionDialog()
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            selected_options = dialog.get_selected_options()
+            for option in selected_options:
+                item = QListWidgetItem(option)
+                self.selected_list.addItem(item)
 
-    # def select_assets_layout(self):
-    #     """Adjusts the layout to include elements for selecting assets."""
-    #     self.clear_layout()
-    #     self.asset_list = QListWidget()
-    #     self.asset_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+## ---------------------- Dialog do wyboru aktywów ------------------
+import json
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QListWidget, QLabel, QDialogButtonBox, QListWidgetItem, QHBoxLayout, QWidget
 
-    #     # Lista dostępnych akcji (tickers)
-    #     self.assets = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "SPY", "BABA"]
-    #     self.asset_list.addItems(self.assets)  # Dodajemy tickery do listy
-
-    #     # Tworzymy przycisk "Run"
-    #     self.run_button = QPushButton("Run")
-    #     self.run_button.clicked.connect(self.run)
-
-    #     # Tworzymy layout i dodajemy widgety
-    #     layout = QVBoxLayout()
-    #     layout.addWidget(self.label)
-    #     layout.addWidget(self.asset_list)
-    #     layout.addWidget(self.run_button)
-
-    #     self.setLayout(layout)
-
-
-    # def open_asset_selection_dialog(self):
-    #     # Otworzenie okna dialogowego do wyboru aktywów
-    #     dialog = AssetSelectionDialog(self)
-    #     dialog.exec()  # Uruchomienie dialogu
-
-    # def add_selected_assets(self):
-    #     # Pobranie zaznaczonych aktywów
-    #     selected_items = self.asset_list.selectedItems()
-    #     selected_assets = [item.text() for item in selected_items]
-    #     print(f"Selected Assets: {selected_assets}")
-
-
-
-
-    def run(self, portfolio_table, chart_widget):
-        """Simulates portfolio optimization and updates the chart."""
-        self.start_date = self.end_date_line.text()
-        self.end_date = self.end_date_line.text()
-        self.budget = self.budget_line.text()
-        # Sekcja wag kryteriów (jeśli wielokryterialna optymalizacja):
-        # Wagi dla ryzyka, zwrotu, drawdown itp.
-
-
-
-    def add_selected_assets(self):
-        """Add selected assets to the selected assets list."""
-        self.selected_items = self.asset_list.selectedItems()
-
-        for item in self.selected_items:
-            self.selected_assets_list.addItem(item.text())
-
-        self.asset_list.clearSelection()
-
-
-class AssetSelectionDialog(QDialog):
+class SelectionDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Tytuł dialogu
-        self.setWindowTitle("Select Assets")
+        self.setWindowTitle("Select Options")
+        self.setGeometry(150, 150, 400, 300)
 
-        # Lista aktywów
-        self.asset_list = QListWidget(self)
-        self.asset_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
-        assets = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "SPY", "BABA"]
-        self.asset_list.addItems(assets)
+        # Główny layout dialogu
+        self.dialog_layout = QVBoxLayout()
 
-        # Ustawienia przycisków dialogowych
+        # Załaduj dane z pliku JSON
+        self.categories = self.load_categories_from_json('config/tickers.json')
+
+        # Dodaj kategorie jako nagłówki i ich elementy do listy
+        for category, items in self.categories.items():
+            # Dodaj kategorię jako nagłówek
+            category_label = QLabel(category)
+            self.dialog_layout.addWidget(category_label)
+
+            # Lista dla każdego elementu w danej kategorii
+            option_list = QListWidget()
+            option_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+            option_list.addItems(items)
+            self.dialog_layout.addWidget(option_list)
+
+        # Przycisk zatwierdzenia i anulowania
         self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
+        self.dialog_layout.addWidget(self.button_box)
 
-        # Layout dla listy i przycisków
-        dialog_layout = QVBoxLayout(self)
-        dialog_layout.addWidget(self.asset_list)
-        dialog_layout.addWidget(self.button_box)
+        self.setLayout(self.dialog_layout)
 
-        self.setLayout(dialog_layout)
+    def load_categories_from_json(self, file_path):
+        """Funkcja do wczytania kategorii z pliku JSON"""
+        try:
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+                return data  # Zwróci całą zawartość pliku, czyli kategorie (np. 'stocks' i 'bonds')
+        except Exception as e:
+            print(f"Error loading JSON: {e}")
+            return {}
 
-    def get_selected_assets(self):
-        # Zwracamy listę wybranych elementów
-        selected_assets = [item.text() for item in self.asset_list.selectedItems()]
-        return selected_assets
-    
+    def get_selected_options(self):
+        """Zwraca wybrane opcje (kategorie i wybrane elementy)"""
+        selected_options = {}
 
-# zakladki do zmiany wykresu w polu wykresu
+        # Iteracja po wszystkich kategoriach i ich elementach
+        for category, items in self.categories.items():
+            # Szukaj wybranych elementów w danej kategorii
+            selected_items = [item for item in items if item in [i.text() for i in self.findChildren(QListWidgetItem)]]
+            
+            if selected_items:
+                selected_options[category] = selected_items
+
+        return selected_options
+
+## ---------------------- Chart Widget ------------------
+
 class PortfolioChartWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -309,34 +284,34 @@ class PortfolioChartWidget(QWidget):
 
 # # ---------------------- Data ------------------
 
-    def download_data(self):
-        self.tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "SPY", "BABA"]
-        self.start_date = "2022-01-01"
-        self.end_date = "2024-10-31"
-        self.data = yf.download(self.tickers, start=self.start_date, end=self.end_date)['Adj Close']
-        if self.data is not None:
-            self.isDataLoaded = True
-        else:
-            print("Cannot download data!")
+    # def download_data(self):
+    #     self.tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "SPY", "BABA"]
+    #     self.start_date = "2022-01-01"
+    #     self.end_date = "2024-10-31"
+    #     self.data = yf.download(self.tickers, start=self.start_date, end=self.end_date)['Adj Close']
+    #     if self.data is not None:
+    #         self.isDataLoaded = True
+    #     else:
+    #         print("Cannot download data!")
 
-    def save_csv(self, data, file_name: str):
-        data.to_csv(file_name)
-        print(f"Data saved in {file_name}")
+    # def save_csv(self, data, file_name: str):
+    #     data.to_csv(file_name)
+    #     print(f"Data saved in {file_name}")
 
-    def load_csv(self, window, file_name: str):
-        try:
-            self.data = pd.read_csv(file_name)
-            if self.data is not None:
-                self.isDataLoaded = True
-            else:
-                print("Cannot load data!")
-            window.table_widget.setRowCount(len(self.data))
-            window.table_widget.setColumnCount(len(self.data.columns))
-            window.table_widget.setHorizontalHeaderLabels(self.data.columns)
+    # def load_csv(self, window, file_name: str):
+    #     try:
+    #         self.data = pd.read_csv(file_name)
+    #         if self.data is not None:
+    #             self.isDataLoaded = True
+    #         else:
+    #             print("Cannot load data!")
+    #         window.table_widget.setRowCount(len(self.data))
+    #         window.table_widget.setColumnCount(len(self.data.columns))
+    #         window.table_widget.setHorizontalHeaderLabels(self.data.columns)
 
-            for row in range(len(self.data)):
-                for col in range(len(self.data.columns)):
-                    item = QTableWidgetItem(str(self.data.iloc[row, col]))
-                    window.table_widget.setItem(row, col, item)
-        except Exception as e:
-            print(f"Error loading data: {e}")
+    #         for row in range(len(self.data)):
+    #             for col in range(len(self.data.columns)):
+    #                 item = QTableWidgetItem(str(self.data.iloc[row, col]))
+    #                 window.table_widget.setItem(row, col, item)
+    #     except Exception as e:
+    #         print(f"Error loading data: {e}")
