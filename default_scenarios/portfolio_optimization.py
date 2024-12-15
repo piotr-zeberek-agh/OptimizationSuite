@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QDialogBu
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import json
+from portfolio_data import fetch_data
 
 class PortfolioOptimizationScenario(Scenario):
     def __init__(self, layout):
@@ -16,6 +17,7 @@ class PortfolioOptimizationScenario(Scenario):
         self.start_date = self.end_date_line.text()
         self.end_date = self.end_date_line.text()
         self.budget = self.budget_line.text()
+
 
     def adjust_layout(self):
         """Adjusts the layout to include elements for portfolio optimization."""
@@ -30,34 +32,34 @@ class PortfolioOptimizationScenario(Scenario):
         self.left_layout.setSpacing(10)
 
         self.row_1 = QHBoxLayout()
-
         self.load_data_button = QPushButton()
         self.load_data_button.setText("Load Data")
+        self.load_data_button.clicked.connect(self.load_data)
+        self.row_1.addWidget(self.load_data_button)
         self.download_data_button = QPushButton()
         self.download_data_button.setText("Download Data")
-        self.row_1.addWidget(self.load_data_button)
+        self.download_data_button.clicked.connect(self.download_data)
         self.row_1.addWidget(self.download_data_button)
         self.left_layout.addLayout(self.row_1)
 
         self.row_2 = QHBoxLayout()
-
         self.reset_data_button = QPushButton()
         self.reset_data_button.setText("Reset Data")
-        self.save_result_button = QPushButton()
-        self.save_result_button.setText("Save Result")
+        self.reset_data_button.clicked.connect(self.reset_data)
         self.row_2.addWidget(self.reset_data_button)
-        self.row_2.addWidget(self.save_result_button)
+        self.save_data_button = QPushButton()
+        self.save_data_button.setText("Save Result")
+        self.reset_data_button.clicked.connect(self.save_data)
+        self.row_2.addWidget(self.save_data_button)
         self.left_layout.addLayout(self.row_2)
 
         self.row_3 = QHBoxLayout()
-
         self.interval_label = QLabel("Enter the interval for the data")
         self.interval_label.setFont(title_font)
         self.row_3.addWidget(self.interval_label)
         self.left_layout.addLayout(self.row_3)
 
         self.row_4 = QHBoxLayout()
-
         self.start_date_line = QLineEdit()
         self.start_date_line.setPlaceholderText("Start (YYYY-MM-DD)")
         self.row_4.addWidget(self.start_date_line)
@@ -66,8 +68,11 @@ class PortfolioOptimizationScenario(Scenario):
         self.row_4.addWidget(self.end_date_line)
         self.left_layout.addLayout(self.row_4)
 
-        self.row_5 = QHBoxLayout()
+        self.left_layout.addWidget(QLabel("Enter filename to save data"))
+        self.filename_line = QLineEdit()
+        self.left_layout.addWidget(self.filename_line)
 
+        self.row_5 = QHBoxLayout()
         self.row_5.addWidget(QLabel("Enter your budget"))
         self.budget_line = QLineEdit()
         self.budget_line.setPlaceholderText("")
@@ -75,7 +80,6 @@ class PortfolioOptimizationScenario(Scenario):
         self.left_layout.addLayout(self.row_5)
         
         self.row_6 = QHBoxLayout()
-        
         self.selected_table = QTableWidget()
         self.row_6.addWidget(self.selected_table)
         self.left_layout.addLayout(self.row_6)
@@ -83,7 +87,6 @@ class PortfolioOptimizationScenario(Scenario):
         self.open_dialog_button.clicked.connect(self.open_selection_window)
         self.left_layout.addWidget(self.open_dialog_button)
  
-
         # Middle line
 
         self.mid_layout = QVBoxLayout()
@@ -117,16 +120,39 @@ class PortfolioOptimizationScenario(Scenario):
         self.main_window.addLayout(self.right_layout)
         self.layout.addLayout(self.main_window)
 
+    def load_data(self):
+        pass
+
+    def download_data(self):
+        start_date = self.start_date_line.text()
+        end_date = self.end_date_line.text()
+        self.data = fetch_data(self.selected_options, start_date, end_date)
+        self.data.to_csv("data/data.csv")
+
+    def reset_data(self):
+        self.selected_table.setColumnCount(0)
+        self.selected_table.setRowCount(0)
+        self.selected_table.clear()
+
+    def save_data(self):
+        pass
+            # my_name = self.filename_line.text()
+    # , filename="data/{my_name}}.csv"
+
+
+
+
     def open_selection_window(self):
+        """Function to open a dialog for selecting assets"""
         try:
             dialog = SelectionDialog()
             if dialog.exec() == QDialog.DialogCode.Accepted:
-                selected_options = dialog.get_selected_options()
-                self.selected_table.setColumnCount(len(selected_options.keys()))
-                self.selected_table.setHorizontalHeaderLabels(selected_options.keys())
-                self.selected_table.setRowCount(max([len(v) for v in selected_options.values()]))
-                for i, category in enumerate(selected_options.keys()):
-                    for j, item in enumerate(selected_options[category]):
+                self.selected_options = dialog.get_selected_options()
+                self.selected_table.setColumnCount(len(self.selected_options.keys()))
+                self.selected_table.setHorizontalHeaderLabels(self.selected_options.keys())
+                self.selected_table.setRowCount(max([len(v) for v in self.selected_options.values()]))
+                for i, category in enumerate(self.selected_options.keys()):
+                    for j, item in enumerate(self.selected_options[category]):
                         q_item = QTableWidgetItem(item)
                         q_item.setFlags(q_item.flags() & ~Qt.ItemFlag.ItemIsEditable)   # blokowanie komorek
                         self.selected_table.setItem(j, i, q_item) 
