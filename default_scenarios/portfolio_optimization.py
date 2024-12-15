@@ -1,7 +1,7 @@
 from scenario import Scenario
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QAbstractItemView, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import json
@@ -66,34 +66,23 @@ class PortfolioOptimizationScenario(Scenario):
         self.row_4.addWidget(self.end_date_line)
         self.left_layout.addLayout(self.row_4)
 
-#############################################
+        self.row_5 = QHBoxLayout()
 
-        self.row_7 = QHBoxLayout()
-
-        self.row_7.addWidget(QLabel("Enter your budget"))
+        self.row_5.addWidget(QLabel("Enter your budget"))
         self.budget_line = QLineEdit()
         self.budget_line.setPlaceholderText("")
-        self.row_7.addWidget(self.budget_line)
-        self.left_layout.addLayout(self.row_7)
-
-############################################
-        # self.selected_list = QListWidget()
-        # self.left_layout.addWidget(QLabel("Selected Options:"))
-        # self.left_layout.addWidget(self.selected_list)
-       
-# ##############
-
-        self.selected_table = QTableWidget()
+        self.row_5.addWidget(self.budget_line)
+        self.left_layout.addLayout(self.row_5)
+        
         self.row_6 = QHBoxLayout()
+        
+        self.selected_table = QTableWidget()
         self.row_6.addWidget(self.selected_table)
         self.left_layout.addLayout(self.row_6)
-
-# ##############
-
-        self.open_dialog_button = QPushButton("Open Selection Window")
+        self.open_dialog_button = QPushButton("Choose Assets")
         self.open_dialog_button.clicked.connect(self.open_selection_window)
         self.left_layout.addWidget(self.open_dialog_button)
- #############################################
+ 
 
         # Middle line
 
@@ -138,17 +127,19 @@ class PortfolioOptimizationScenario(Scenario):
                 self.selected_table.setRowCount(max([len(v) for v in selected_options.values()]))
                 for i, category in enumerate(selected_options.keys()):
                     for j, item in enumerate(selected_options[category]):
-                        self.selected_table.setItem(j, i, QTableWidgetItem(item))
+                        q_item = QTableWidgetItem(item)
+                        q_item.setFlags(q_item.flags() & ~Qt.ItemFlag.ItemIsEditable)   # blokowanie komorek
+                        self.selected_table.setItem(j, i, q_item) 
         except Exception as e:
             print(f"Error opening selection window: {e}")
 
-## ---------------------- Dialog do wyboru aktywów ------------------
+## ---------------------- Dialog for selecting assets ------------------
 class SelectionDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.setWindowTitle("Select Options")
-        self.setGeometry(150, 150, 250, 400)
+        self.setGeometry(150, 150, 800, 400)
         self.dialog_layout = QHBoxLayout()
         self.categories = self.load_categories_from_json('config/tickers.json')
 
@@ -170,7 +161,7 @@ class SelectionDialog(QDialog):
         self.setLayout(self.dialog_layout)
 
     def load_categories_from_json(self, file_path):
-        """Funkcja do wczytania kategorii z pliku JSON"""
+        """Function to load categories and options from a JSON file."""
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
@@ -180,27 +171,22 @@ class SelectionDialog(QDialog):
             return {}
         
     def get_selected_options(self):
-        """Zwraca wybrane opcje (kategorie i wybrane elementy)"""
+        """Function to get selected options from the dialog."""
         selected_options = {}
 
-        # Iterowanie po kategoriach i ich elementach
-        for layout_index in range(self.dialog_layout.count() - 1):  # Ostatni element to przyciski, pomijamy go
-            category_layout = self.dialog_layout.itemAt(layout_index).layout()  # Pobieramy layout kategorii
+        for layout_index in range(self.dialog_layout.count() - 1):  # Ostatni element to przyciski
+            category_layout = self.dialog_layout.itemAt(layout_index).layout()
             if not category_layout:
                 continue
-            
-            category_label = category_layout.itemAt(0).widget()  # Pobieramy QLabel z nazwą kategorii
-            category = category_label.text()  # Tekst etykiety to nazwa kategorii
-            
-            option_list = category_layout.itemAt(1).widget()  # Pobieramy QListWidget
+            category_label = category_layout.itemAt(0).widget() # QLabel
+            category = category_label.text()
+
+            option_list = category_layout.itemAt(1).widget()  #  QListWidget
             if not option_list:
                 continue
-            
-            # Pobieramy wybrane elementy w QListWidget
             selected_items = [item.text() for item in option_list.selectedItems()]
             if selected_items:
-                selected_options[category] = selected_items  # Dodajemy wybrane elementy do słownika
-
+                selected_options[category] = selected_items
         return selected_options
 
 ## ---------------------- Chart Widget ------------------

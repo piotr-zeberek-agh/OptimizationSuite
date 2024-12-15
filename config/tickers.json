@@ -1,32 +1,25 @@
 {
-    "stocks": [
+    "Stocks": [
         "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", 
         "FB", "NVDA", "NFLX", "AMD", "SPY"
     ],
-    "bonds": [
+    "Bonds": [
     "BND", "TLT", "LQD", "IEF", "BIV", 
     "GOVT", "SHY", "AGG", "SPAB", "VCLT"
     ],
-    "commodities": [
+    "Commodities": [
         "GOLD", "SILVER", "OIL", "COPPER", "NATGAS", 
         "PLATINUM", "PALLADIUM", "WHEAT", "CORN", "SOYBEAN"
     ],
-    "etfs": [
+    "ETFs": [
     "SPY", "VTI", "IVV", "QQQ", "IWM", 
     "EEM", "VWO", "TLT", "VGT", "XLY"
     ],
-    "mutual_funds": [
-        "Vanguard Total Stock Market Index Fund",
-        "Fidelity 500 Index Fund",
-        "Schwab U.S. Large-Cap ETF",
-        "T. Rowe Price Equity Income Fund",
-        "Vanguard Growth Index Fund"
-    ],
-    "currencies": [
+    "Currencies": [
     "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCHF=X", 
     "USDCAD=X", "NZDUSD=X", "EURGBP=X", "EURJPY=X", "GBPJPY=X"
     ],
-    "indexes": [
+    "Indexes": [
         "SPX", "DJIA", "NASDAQ", "RUSSELL2000", "FTSE100", 
         "NIKKEI225", "DAX", "CAC40", "HSI", "ASX200"
     ]
