@@ -1,0 +1,55 @@
+class SelectionDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Select Options")
+        self.setGeometry(150, 150, 100, 250)
+
+        self.dialog_layout = QHBoxLayout()
+
+        # Załaduj dane z pliku JSON
+        self.categories = self.load_categories_from_json('config/tickers.json')
+
+        # Dodaj kategorie jako nagłówki i ich elementy do listy
+        for category, items in self.categories.items():
+            # Dodaj kategorię jako nagłówek
+            category_label = QLabel(category)
+            self.dialog_layout.addWidget(category_label)
+
+            # Lista dla każdego elementu w danej kategorii
+            option_list = QListWidget()
+            option_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+            option_list.addItems(items)
+            self.dialog_layout.addWidget(option_list)
+
+        # Przycisk zatwierdzenia i anulowania
+        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        self.dialog_layout.addWidget(self.button_box)
+
+        self.setLayout(self.dialog_layout)
+
+    def load_categories_from_json(self, file_path):
+        """Funkcja do wczytania kategorii z pliku JSON"""
+        try:
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+                return data  # Zwróci całą zawartość pliku, czyli kategorie (np. 'stocks' i 'bonds')
+        except Exception as e:
+            print(f"Error loading JSON: {e}")
+            return {}
+
+    def get_selected_options(self):
+        """Zwraca wybrane opcje (kategorie i wybrane elementy)"""
+        selected_options = {}
+
+        # Iteracja po wszystkich kategoriach i ich elementach
+        for category, items in self.categories.items():
+            # Szukaj wybranych elementów w danej kategorii
+            selected_items = [item for item in items if item in [i.text() for i in self.findChildren(QListWidgetItem)]]
+            
+            if selected_items:
+                selected_options[category] = selected_items
+
+        return selected_options

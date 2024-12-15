@@ -1,9 +1,9 @@
 from scenario import Scenario
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QVBoxLayout, QListWidgetItem, QDialogButtonBox, QDialog, QTableWidgetItem, QListWidget, QFrame, QLabel, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PyQt6.QtGui import QFont
 import json
 
 class PortfolioOptimizationScenario(Scenario):
@@ -11,9 +11,6 @@ class PortfolioOptimizationScenario(Scenario):
         super().__init__(layout)
         self.adjust_layout()
 
-        # self.my_run_button.clicked.connect(lambda: self.run(portfolio_table, chart_widget))
-        # self.select_assets_button.clicked.connect(self.open_asset_selection_dialog)
-    
     def run(self, portfolio_table, chart_widget):
         """Simulates portfolio optimization and updates the chart."""
         self.start_date = self.end_date_line.text()
@@ -33,7 +30,6 @@ class PortfolioOptimizationScenario(Scenario):
         self.left_layout.setSpacing(10)
 
         self.row_1 = QHBoxLayout()
-        # self.row_1.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.load_data_button = QPushButton()
         self.load_data_button.setText("Load Data")
@@ -95,37 +91,14 @@ class PortfolioOptimizationScenario(Scenario):
         # self.row_5.addWidget(self.parameters_label)
         # self.left_layout.addLayout(self.row_5)
 
-        # self.row_6 = QHBoxLayout()
-        # self.input_table_2 = QTableWidget()
-        # self.input_table_2.setRowCount(6)
-        # self.input_table_2.setColumnCount(2)
-        # self.input_table_2.setVerticalHeaderLabels(["Name", "input Value"])
-        # self.input_table_2.setVerticalHeaderLabels(["Initial Temperature", "Cooling Rate", "Number of Iterations", "Stop Temperature", "Perturbation Function", "Acceptance Criterion"])
-        # self.row_6.addWidget(self.input_table_2)
-        # self.left_layout.addLayout(self.row_6)
-
-
-
-
-
-
-
-        # self.row_6 = QHBoxLayout()
-
-        # self.select_assets_button = QPushButton("Select Assets")
-        # self.row_6.addWidget(self.select_assets_button)
-
-
-        # # Inicjalizacja listy aktywów
-        # self.asset_list = QListWidget(self)
-        # self.asset_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
-        # self.assets = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "SPY", "BABA"]
-        # self.asset_list.addItems(self.assets)
-
-        # # Podpięcie przycisku do otwierania okna wyboru aktywów
-        # self.select_assets_button.clicked.connect(self.open_asset_selection_dialog)
-
-        # self.left_layout.addLayout(self.row_6)
+        self.row_6 = QHBoxLayout()
+        self.input_table_2 = QTableWidget()
+        self.input_table_2.setRowCount(1)
+        self.input_table_2.setColumnCount(1)
+        self.input_table_2.setVerticalHeaderLabels([ "input Value"])
+        self.input_table_2.setVerticalHeaderLabels([""])
+        self.row_6.addWidget(self.input_table_2)
+        self.left_layout.addLayout(self.row_6)
 
         self.row_7 = QHBoxLayout()
 
@@ -140,6 +113,16 @@ class PortfolioOptimizationScenario(Scenario):
         self.selected_list = QListWidget()
         self.left_layout.addWidget(QLabel("Selected Options:"))
         self.left_layout.addWidget(self.selected_list)
+        
+        # self.input_table_2 = QTableWidget()
+
+        # self.input_table_2.setVerticalHeaderLabels(["Name", "input Value"])
+        # self.input_table_2.setVerticalHeaderLabels(["Initial Temperature", "Cooling Rate", "Number of Iterations", "Stop Temperature", "Perturbation Function", "Acceptance Criterion"])
+        # self.row_6.addWidget(self.input_table_2)
+        # self.left_layout.addLayout(self.row_6)
+
+
+
 
         self.open_dialog_button = QPushButton("Open Selection Window")
         self.open_dialog_button.clicked.connect(self.open_selection_window)
@@ -185,50 +168,55 @@ class PortfolioOptimizationScenario(Scenario):
         self.main_window.addLayout(self.right_layout)
         self.layout.addLayout(self.main_window)
 
+    # def open_selection_window(self):
+    #     dialog = SelectionDialog()
+    #     if dialog.exec() == QDialog.DialogCode.Accepted:
+    #         selected_options = dialog.get_selected_options()
+    #         for option in selected_options:
+    #             item = QListWidgetItem(option)
+    #             self.selected_list.addItem(item)
 
-        # Sekcja ograniczeń portfela:
-        # Tolerancja ryzyka, minimalny/oczekiwany zwrot, maksymalny drawdown, liczba aktywów, budżet.
-
-
-
+    # tu probuje ze slownikiem
     def open_selection_window(self):
         dialog = SelectionDialog()
         if dialog.exec() == QDialog.DialogCode.Accepted:
             selected_options = dialog.get_selected_options()
-            for option in selected_options:
-                item = QListWidgetItem(option)
-                self.selected_list.addItem(item)
+            for category, items in selected_options.items():
+                pass
+
+
+                # self.categories[category] = items
+
+                # for option in items:
+                #     item = QListWidgetItem(option)
+                #     self.selected_list.addItem(item)
+
 
 ## ---------------------- Dialog do wyboru aktywów ------------------
-import json
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QListWidget, QLabel, QDialogButtonBox, QListWidgetItem, QHBoxLayout, QWidget
-
 class SelectionDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.setWindowTitle("Select Options")
-        self.setGeometry(150, 150, 400, 300)
+        self.setGeometry(150, 150, 250, 400)
 
-        # Główny layout dialogu
-        self.dialog_layout = QVBoxLayout()
+        self.dialog_layout = QHBoxLayout()
 
-        # Załaduj dane z pliku JSON
         self.categories = self.load_categories_from_json('config/tickers.json')
 
-        # Dodaj kategorie jako nagłówki i ich elementy do listy
         for category, items in self.categories.items():
-            # Dodaj kategorię jako nagłówek
-            category_label = QLabel(category)
-            self.dialog_layout.addWidget(category_label)
+            new_layout = QVBoxLayout()
 
-            # Lista dla każdego elementu w danej kategorii
+            category_label = QLabel(category)
+            new_layout.addWidget(category_label)
+
             option_list = QListWidget()
             option_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
             option_list.addItems(items)
-            self.dialog_layout.addWidget(option_list)
+            new_layout.addWidget(option_list)
 
-        # Przycisk zatwierdzenia i anulowania
+            self.dialog_layout.addLayout(new_layout)
+
         self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
@@ -241,9 +229,9 @@ class SelectionDialog(QDialog):
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
-                return data  # Zwróci całą zawartość pliku, czyli kategorie (np. 'stocks' i 'bonds')
+                return data
         except Exception as e:
-            print(f"Error loading JSON: {e}")
+            print(f"Error loading Assets from JSON file: {e}")
             return {}
 
     def get_selected_options(self):
@@ -259,6 +247,10 @@ class SelectionDialog(QDialog):
                 selected_options[category] = selected_items
 
         return selected_options
+
+        # first_key = next(iter(self.categories))
+        # return self.categories[first_key]
+
 
 ## ---------------------- Chart Widget ------------------
 
