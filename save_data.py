@@ -20,13 +20,6 @@ def fetch_commodity_data(tickers, start_date, end_date):
     data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
     return data
 
-# def fetch_crypto_data_ccxt(crypto_tickers, start_date, end_date):
-#     """
-#     Pobiera dane o kryptowalutach z giełdy przy użyciu ccxt
-#     """
-#     print(f"Pobieranie danych dla kryptowalut: {crypto_tickers}...")
-
-
 def fetch_data(tickers_by_category, start_date, end_date, filename="asset_data.csv"):
     all_data = []
     for category, tickers in tickers_by_category.items():

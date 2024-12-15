@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QPushButton
 from default_scenarios import (gradient_descent, fullerenes_structure, portfolio_optimization)
 from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt
 
 DEFAULT_SCENARIO_CLASSES = {
     "Gradient Descent": gradient_descent.GradientDescentScenario,
@@ -40,6 +41,11 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout.setSpacing(5)
 
         self.scenario_combo_box = QComboBox()
+
+        self.scenario_combo_box.setFixedWidth(300)
+        self.scenario_choosing_layout.addStretch()
+        self.scenario_choosing_layout.setAlignment(self.scenario_combo_box, Qt.AlignmentFlag.AlignRight)
+
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
         self.scenario_choosing_layout.addWidget(self.scenario_combo_box)
         
