@@ -1,22 +1,25 @@
 from scenario import Scenario
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QAbstractItemView, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QDialog, QMessageBox, QListWidget, QLabel, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QAbstractItemView, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import json
 from portfolio_data import fetch_data
+import re
 
 class PortfolioOptimizationScenario(Scenario):
     def __init__(self, layout):
         super().__init__(layout)
+        # self.is_data = False
+        self.selected_options = None
+        self.data = None
+
         self.adjust_layout()
 
     def run(self, portfolio_table, chart_widget):
         """Simulates portfolio optimization and updates the chart."""
-        self.start_date = self.end_date_line.text()
-        self.end_date = self.end_date_line.text()
-        self.budget = self.budget_line.text()
+        # self.budget = self.budget_line.text()
 
 
     def adjust_layout(self):
@@ -31,46 +34,36 @@ class PortfolioOptimizationScenario(Scenario):
         self.left_layout.setContentsMargins(0, 0, 0, 0)
         self.left_layout.setSpacing(10)
 
-        self.row_1 = QHBoxLayout()
-        self.load_data_button = QPushButton()
-        self.load_data_button.setText("Load Data")
-        self.load_data_button.clicked.connect(self.load_data)
-        self.row_1.addWidget(self.load_data_button)
-        self.download_data_button = QPushButton()
-        self.download_data_button.setText("Download Data")
-        self.download_data_button.clicked.connect(self.download_data)
-        self.row_1.addWidget(self.download_data_button)
-        self.left_layout.addLayout(self.row_1)
-
-        self.row_2 = QHBoxLayout()
-        self.reset_data_button = QPushButton()
-        self.reset_data_button.setText("Reset Data")
-        self.reset_data_button.clicked.connect(self.reset_data)
-        self.row_2.addWidget(self.reset_data_button)
-        self.save_data_button = QPushButton()
-        self.save_data_button.setText("Save Result")
-        self.reset_data_button.clicked.connect(self.save_data)
-        self.row_2.addWidget(self.save_data_button)
-        self.left_layout.addLayout(self.row_2)
-
-        self.row_3 = QHBoxLayout()
-        self.interval_label = QLabel("Enter the interval for the data")
-        self.interval_label.setFont(title_font)
-        self.row_3.addWidget(self.interval_label)
-        self.left_layout.addLayout(self.row_3)
+        # self.interval_label.setFont(title_font)
+        self.left_layout.addWidget(QLabel("Enter the interval for the data"))
 
         self.row_4 = QHBoxLayout()
         self.start_date_line = QLineEdit()
         self.start_date_line.setPlaceholderText("Start (YYYY-MM-DD)")
         self.row_4.addWidget(self.start_date_line)
+        self.start_date_line.textChanged.connect(self.check_date_input)
         self.end_date_line = QLineEdit()
         self.end_date_line.setPlaceholderText("End (YYYY-MM-DD)")
         self.row_4.addWidget(self.end_date_line)
+        self.end_date_line.textChanged.connect(self.check_date_input)
         self.left_layout.addLayout(self.row_4)
 
-        self.left_layout.addWidget(QLabel("Enter filename to save data"))
+        self.download_layout = QHBoxLayout()
+        self.download_data_button = QPushButton()
+        self.download_data_button.setText("Download Data")
+        self.download_data_button.setEnabled(False)
+        self.download_data_button.clicked.connect(self.download_data)
+        self.download_layout.addWidget(self.download_data_button)
         self.filename_line = QLineEdit()
-        self.left_layout.addWidget(self.filename_line)
+        self.filename_line.setPlaceholderText("Enter filename")
+        self.download_layout.addWidget(self.filename_line)
+        self.filename_line.textChanged.connect(self.check_filename_input)
+        self.save_data_button = QPushButton()
+        self.save_data_button.setText("Save Data")
+        self.save_data_button.setEnabled(False)
+        self.save_data_button.clicked.connect(self.save_data)
+        self.download_layout.addWidget(self.save_data_button)
+        self.left_layout.addLayout(self.download_layout)
 
         self.row_5 = QHBoxLayout()
         self.row_5.addWidget(QLabel("Enter your budget"))
@@ -79,14 +72,18 @@ class PortfolioOptimizationScenario(Scenario):
         self.row_5.addWidget(self.budget_line)
         self.left_layout.addLayout(self.row_5)
         
-        self.row_6 = QHBoxLayout()
         self.selected_table = QTableWidget()
-        self.row_6.addWidget(self.selected_table)
-        self.left_layout.addLayout(self.row_6)
+        self.left_layout.addWidget(self.selected_table)
+
+        self.assets_buttons_layout = QHBoxLayout()
         self.open_dialog_button = QPushButton("Choose Assets")
         self.open_dialog_button.clicked.connect(self.open_selection_window)
-        self.left_layout.addWidget(self.open_dialog_button)
- 
+        self.assets_buttons_layout.addWidget(self.open_dialog_button)
+        self.clear_data_button = QPushButton("Clear Assets")
+        self.clear_data_button.clicked.connect(self.clear_data)
+        self.assets_buttons_layout.addWidget(self.clear_data_button)
+        self.left_layout.addLayout(self.assets_buttons_layout)
+
         # Middle line
 
         self.mid_layout = QVBoxLayout()
@@ -120,26 +117,57 @@ class PortfolioOptimizationScenario(Scenario):
         self.main_window.addLayout(self.right_layout)
         self.layout.addLayout(self.main_window)
 
-    def load_data(self):
-        pass
+    def check_date_input(self):
+        date_format_start = r"^\d{4}-\d{2}-\d{2}$"  # Format: YYYY-MM-DD
+        date_text_start = self.start_date_line.text()
+        date_format_end = r"^\d{4}-\d{2}-\d{2}$"
+        date_text_end = self.end_date_line.text()
+
+        if re.match(date_format_start, date_text_start) and re.match(date_format_end, date_text_end) and date_text_start <= date_text_end:
+            if self.selected_options is not None:
+                self.download_data_button.setEnabled(True)
+            else:
+                self.download_data_button.setEnabled(False)
+        else:
+            self.download_data_button.setEnabled(False)
 
     def download_data(self):
         start_date = self.start_date_line.text()
         end_date = self.end_date_line.text()
         self.data = fetch_data(self.selected_options, start_date, end_date)
-        self.data.to_csv("data/data.csv")
+        
+    def check_filename_input(self):
+        # filename = self.filename_line.text().strip()
+        filename = self.filename_line.text().strip()
 
-    def reset_data(self):
+        if filename == '':
+            self.save_data_button.setEnabled(False)
+        elif not filename[0] in ['.', ' '] or not re.search(r'[<>:"/\\|?*]', filename):
+            if self.data is not None:
+                self.save_data_button.setEnabled(True)
+            else:
+                self.save_data_button.setEnabled(False)
+        else:
+            self.save_data_button.setEnabled(False) 
+
+
+    def save_data(self):
+        filename="data/" + self.filename_line.text()
+        if not filename.endswith('.csv'):
+            filename += '.csv'
+        self.data.to_csv(filename)
+
+    def clear_data(self):
         self.selected_table.setColumnCount(0)
         self.selected_table.setRowCount(0)
         self.selected_table.clear()
+        self.download_data_button.setEnabled(False)
+        self.save_data_button.setEnabled(False) 
+        self.selected_options = None
+        self.data = None
 
-    def save_data(self):
+    def load_data(self):
         pass
-            # my_name = self.filename_line.text()
-    # , filename="data/{my_name}}.csv"
-
-
 
 
     def open_selection_window(self):
@@ -156,6 +184,9 @@ class PortfolioOptimizationScenario(Scenario):
                         q_item = QTableWidgetItem(item)
                         q_item.setFlags(q_item.flags() & ~Qt.ItemFlag.ItemIsEditable)   # blokowanie komorek
                         self.selected_table.setItem(j, i, q_item) 
+                if self.selected_options:
+                    # self.are_options = True
+                    self.check_date_input()
         except Exception as e:
             print(f"Error opening selection window: {e}")
 
