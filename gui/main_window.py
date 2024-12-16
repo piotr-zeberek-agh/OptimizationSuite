@@ -58,9 +58,9 @@ class MainWindow(QMainWindow):
         self.window_layout.addLayout(self.scenario_input_layout)
         
         #### czy potrzebny przycisk w domyslnym oknie? #####
-        self.run_button = QPushButton()
-        self.run_button.setText("Run")
-        self.window_layout.addWidget(self.run_button)
+        # self.run_button = QPushButton()
+        # self.run_button.setText("Run")
+        # self.window_layout.addWidget(self.run_button)
 
         self.central_widget.setLayout(self.window_layout)
 
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         scenario_name = self.scenario_combo_box.currentText()
         self.scenario_label.setText(scenario_name)
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
-        self.run_button.clicked.connect(self.current_scenario.run)
+        # self.run_button.clicked.connect(self.current_scenario.run)
 
     def setup_fullerenes(self):
         """Set up the Structure Of Fullerenes scenario."""
