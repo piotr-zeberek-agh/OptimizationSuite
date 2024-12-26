@@ -69,7 +69,20 @@ class MainWindow(QMainWindow):
         scenario_name = self.scenario_combo_box.currentText()
         self.scenario_label.setText(scenario_name)
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
-        # self.run_button.clicked.connect(self.current_scenario.run)
+
+        self.run_button.clicked.connect(self.current_scenario.run)
+        # print(f"Selected scenario: {selected_scenario}")
+
+        # self.clear_layout()
+        # self.set_base_layout(selected_scenario)
+        # self.combo_box.currentTextChanged.connect(self.on_scenario_change)
+
+        # if selected_scenario == "Structure Of Fullerenes":
+        #     self.setup_fullerenes()
+        # elif selected_scenario == "Portfolio Optimization":
+        #     self.setup_portfolio()
+        # elif selected_scenario == "Gradient Descent":
+        #     self.setup_gradient()
 
     def setup_fullerenes(self):
         """Set up the Structure Of Fullerenes scenario."""
