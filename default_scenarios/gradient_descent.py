@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QTableWidgetItem,
     QLineEdit,
+    QPushButton,
 )
 import numpy as np
 
@@ -16,14 +17,21 @@ class GradientDescentScenario(Scenario):
         self.default_init_val = 0
         self.default_min_val = -1
         self.default_max_val = 1
-        self.default_step_size = 0.01
+        self.default_learning_rate = 0.01
+        self.default_max_iter = 1000
+        self.default_convergence = 1e-6
 
         self.formula_text = "0"
+
+        self.var_names = []
+        self.var_values = np.array([])
+        self.var_min_values = np.array([])
+        self.var_max_values = np.array([])
 
         self.adjust_layout()
 
     def adjust_layout(self):
-                
+
         self.var_count_label = QLabel("No. independent variables: ")
 
         self.var_count_spin_box = QSpinBox()
@@ -37,14 +45,32 @@ class GradientDescentScenario(Scenario):
 
         self.layout.addLayout(self.var_count_layout)
 
-        self.step_size_field = QLineEdit()
-        self.step_size_field.setText(str(self.default_step_size))
+        self.learning_rate_field = QLineEdit()
+        self.learning_rate_field.setText(str(self.default_learning_rate))
 
-        self.step_size_layout = QHBoxLayout()
-        self.step_size_layout.addWidget(QLabel("Step size: "))
-        self.step_size_layout.addWidget(self.step_size_field)
+        self.learning_rate_layout = QHBoxLayout()
+        self.learning_rate_layout.addWidget(QLabel("Learning rate: "))
+        self.learning_rate_layout.addWidget(self.learning_rate_field)
 
-        self.layout.addLayout(self.step_size_layout)
+        self.layout.addLayout(self.learning_rate_layout)
+
+        self.max_iter_field = QLineEdit()
+        self.max_iter_field.setText(str(self.default_max_iter))
+
+        self.max_iter_layout = QHBoxLayout()
+        self.max_iter_layout.addWidget(QLabel("Max iter: "))
+        self.max_iter_layout.addWidget(self.max_iter_field)
+
+        self.layout.addLayout(self.max_iter_layout)
+
+        self.convergence_field = QLineEdit()
+        self.convergence_field.setText(str(self.default_convergence))
+
+        self.convergence_layout = QHBoxLayout()
+        self.convergence_layout.addWidget(QLabel("Convergence: "))
+        self.convergence_layout.addWidget(self.convergence_field)
+
+        self.layout.addLayout(self.convergence_layout)
 
         self.formula_label = QLabel("Formula: ")
 
@@ -64,7 +90,14 @@ class GradientDescentScenario(Scenario):
         )
         self.var_table.setRowCount(1)
         self.set_row_data(0)
+
         self.layout.addWidget(self.var_table)
+
+        self.run_button = QPushButton("Run")
+        # self.run_button.setEnabled(False)
+        self.run_button.clicked.connect(self.run)
+
+        self.layout.addWidget(self.run_button)
 
     def set_row_data(self, idx, data=None):
         if data is None:
@@ -91,16 +124,27 @@ class GradientDescentScenario(Scenario):
 
     def run(self):
         """as of now evaluates formula with min values"""
-        step_size = float(self.step_size_field.text())
+        learning_rate = float(self.learning_rate_field.text())
+        max_iter = int(self.max_iter_field.text())
+        convergence = float(self.convergence_field.text())
+
         self.formula_text = self.formula_field.text()
-        names, v, vmin, vmax = self.get_vars()
+        self.retrieve_vars()
 
         try:
-            print(self.calc_formula_value(names, v))
+            for i in range(max_iter):
+                status, diff = self.make_step(learning_rate)
+                if status == 0:
+                    break
+                if np.all(np.abs(diff) < convergence):
+                    print(f"Convergence criterium reached after {i+1} iterations.")
+                    break
+                print(f"Step {i}: {self.var_values}, diff: {diff}")
+            print(f"Reached max iteration steps")
         except Exception as e:
-            print(f"Error evaluating formula: {e}")
+            print(f"Error making steps: {e}")
 
-    def get_vars(self):
+    def retrieve_vars(self):
         names, vinit, vmin, vmax = [], [], [], []
 
         try:
@@ -127,28 +171,43 @@ class GradientDescentScenario(Scenario):
         except Exception as e:
             print(f"Error retriving variables: {e}")
 
-        return (names, np.array(vinit), np.array(vmin), np.array(vmax))
+        self.var_names = names
+        self.var_values = np.array(vinit)
+        self.var_min_values = np.array(vmin)
+        self.var_max_values = np.array(vmax)
 
-    def calc_formula_value(self, var_names, var_values):
-        formula = self.formula_text
+    def calc_formula_value(self, var_values):
         try:
-            for vname, val in zip(var_names, var_values):
-                formula = formula.replace(vname, str(val))
-            return eval(formula)
+            return eval(self.formula_text, dict(zip(self.var_names, var_values)))
         except Exception as e:
             print(f"Error evaluating formula: {e}")
         return 0
 
-    def calc_gradient(self, var_names, var_values, gradient_step=1e-4):
-        #use numpy
+    def calc_gradient(self, var_values, gradient_step=1e-4):
+        dim = len(var_values)
+        gradient = np.empty(dim, dtype=np.float64)
         
-        # for i in range(len(var_names)):
-        #     vo = var_values[i]
-        #     var_values[i] = vo + gradient_step
-        #     forward = self.calc_formula_value(var_names, var_values)
-        #     var_values[i] = vo - gradient_step
-        #     backward = self.calc_formula_value(var_names, var_values)
-        #     gradient.append((forward - backward) / (2.0 * gradient_step))
-            
-        # return gradient
-        pass
+        for i in range(dim):
+            shift = np.zeros(dim, dtype=np.float64)
+            shift[i] = gradient_step
+            forward = self.calc_formula_value(var_values + shift)
+            backward = self.calc_formula_value(var_values - shift)
+            gradient[i] = forward - backward
+
+        return gradient / (2.0 * gradient_step)
+
+    def make_step(self, learning_rate):
+        new_vars = self.var_values - learning_rate * self.calc_gradient(self.var_values)
+
+        if np.any(new_vars < self.var_min_values):
+            print(
+                "Warning: some variables are below min values"
+            )  # throw exceptions instead, TODO later
+            return 0, ()
+        if np.any(new_vars > self.var_max_values):
+            print("Warning: some variables are above max values")
+            return 0, ()
+
+        diff = new_vars - self.var_values
+        self.var_values = new_vars
+        return 1, diff
