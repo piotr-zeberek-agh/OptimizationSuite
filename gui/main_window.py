@@ -70,7 +70,7 @@ class MainWindow(QMainWindow):
         self.scenario_label.setText(scenario_name)
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
 
-        self.run_button.clicked.connect(self.current_scenario.run)
+        # self.run_button.clicked.connect(self.current_scenario.run)
         # print(f"Selected scenario: {selected_scenario}")
 
         # self.clear_layout()

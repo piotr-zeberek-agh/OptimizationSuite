@@ -262,8 +262,8 @@ class PortfolioOptimizationScenario(Scenario):
         cooling_rate=0.99, max_allocation=0.5, min_allocation=0.0):
         """Function to optimize a portfolio using simulated annealing."""
         num_assets = len(assets)
-        # current_portfolio = np.random.dirichlet(np.ones(num_assets))
-        current_portfolio = np.ones(num_assets) / num_assets
+        current_portfolio = np.random.dirichlet(np.ones(num_assets))
+        # current_portfolio = np.ones(num_assets) / num_assets
         current_portfolio = self.enforce_constraints(current_portfolio, min_allocation, max_allocation)
         current_sharpe = self.calculate_sharpe(current_portfolio, expected_returns, covariance_matrix, risk_free_rate)
         best_portfolio = current_portfolio
