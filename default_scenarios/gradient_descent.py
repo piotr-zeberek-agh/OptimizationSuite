@@ -10,11 +10,8 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QWidget,
 )
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
 
 import numpy as np
-import matplotlib as mpl
 import pyqtgraph as pg
 
 
@@ -122,7 +119,6 @@ class GradientDescentScenario(Scenario):
         self.left_layout.addLayout(self.output_layout)
 
         self.run_button = QPushButton("Run")
-        # self.run_button.setEnabled(False)
         self.run_button.clicked.connect(self.run)
 
         self.left_layout.addWidget(self.run_button)
