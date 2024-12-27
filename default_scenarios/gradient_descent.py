@@ -3,12 +3,19 @@ from PyQt6.QtWidgets import (
     QTableWidget,
     QSpinBox,
     QHBoxLayout,
+    QVBoxLayout,
     QLabel,
     QTableWidgetItem,
     QLineEdit,
     QPushButton,
+    QWidget,
 )
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
+
 import numpy as np
+import matplotlib as mpl
+import pyqtgraph as pg
 
 
 class GradientDescentScenario(Scenario):
@@ -20,6 +27,7 @@ class GradientDescentScenario(Scenario):
         self.default_learning_rate = 0.01
         self.default_max_iter = 1000
         self.default_convergence = 1e-6
+        self.default_refresh_interval = 10
 
         self.formula_text = "0"
 
@@ -32,6 +40,9 @@ class GradientDescentScenario(Scenario):
 
     def adjust_layout(self):
 
+        # left layout
+        self.left_layout = QVBoxLayout()
+
         self.var_count_label = QLabel("No. independent variables: ")
 
         self.var_count_spin_box = QSpinBox()
@@ -43,7 +54,7 @@ class GradientDescentScenario(Scenario):
         self.var_count_layout.addWidget(QLabel("No. independent variables: "))
         self.var_count_layout.addWidget(self.var_count_spin_box)
 
-        self.layout.addLayout(self.var_count_layout)
+        self.left_layout.addLayout(self.var_count_layout)
 
         self.learning_rate_field = QLineEdit()
         self.learning_rate_field.setText(str(self.default_learning_rate))
@@ -52,7 +63,7 @@ class GradientDescentScenario(Scenario):
         self.learning_rate_layout.addWidget(QLabel("Learning rate: "))
         self.learning_rate_layout.addWidget(self.learning_rate_field)
 
-        self.layout.addLayout(self.learning_rate_layout)
+        self.left_layout.addLayout(self.learning_rate_layout)
 
         self.max_iter_field = QLineEdit()
         self.max_iter_field.setText(str(self.default_max_iter))
@@ -61,7 +72,7 @@ class GradientDescentScenario(Scenario):
         self.max_iter_layout.addWidget(QLabel("Max iter: "))
         self.max_iter_layout.addWidget(self.max_iter_field)
 
-        self.layout.addLayout(self.max_iter_layout)
+        self.left_layout.addLayout(self.max_iter_layout)
 
         self.convergence_field = QLineEdit()
         self.convergence_field.setText(str(self.default_convergence))
@@ -70,7 +81,7 @@ class GradientDescentScenario(Scenario):
         self.convergence_layout.addWidget(QLabel("Convergence: "))
         self.convergence_layout.addWidget(self.convergence_field)
 
-        self.layout.addLayout(self.convergence_layout)
+        self.left_layout.addLayout(self.convergence_layout)
 
         self.formula_label = QLabel("Formula: ")
 
@@ -81,23 +92,52 @@ class GradientDescentScenario(Scenario):
         self.formula_layout.addWidget(self.formula_label)
         self.formula_layout.addWidget(self.formula_field)
 
-        self.layout.addLayout(self.formula_layout)
+        self.left_layout.addLayout(self.formula_layout)
 
         self.var_table = QTableWidget()
-        self.var_table.setColumnCount(4)
+        self.var_table.setColumnCount(5)
         self.var_table.setHorizontalHeaderLabels(
-            ["Variable Name", "Initial value", "Min. Value", "Max. Value"]
+            [
+                "Variable Name",
+                "Initial value",
+                "Min. Value",
+                "Max. Value",
+                "Calc. Value",
+            ]
         )
         self.var_table.setRowCount(1)
         self.set_row_data(0)
+        self.var_table.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
 
-        self.layout.addWidget(self.var_table)
+        self.left_layout.addWidget(self.var_table)
+        
+        self.output_label = QLabel("Output: ")
+        self.output_field = QLineEdit()
+        self.output_field.setReadOnly(True)
+        
+        self.output_layout = QHBoxLayout()
+        self.output_layout.addWidget(self.output_label)
+        self.output_layout.addWidget(self.output_field)
+        
+        self.left_layout.addLayout(self.output_layout)
 
         self.run_button = QPushButton("Run")
         # self.run_button.setEnabled(False)
         self.run_button.clicked.connect(self.run)
 
-        self.layout.addWidget(self.run_button)
+        self.left_layout.addWidget(self.run_button)
+
+        # right layout
+        self.right_layout = QVBoxLayout()
+        self.chart = GradientDescentChartWidget()
+        self.right_layout.addWidget(self.chart)
+
+        # main layout
+        self.main_layout = QHBoxLayout()
+        self.main_layout.addLayout(self.left_layout)
+        self.main_layout.addLayout(self.right_layout)
+
+        self.layout.addLayout(self.main_layout)
 
     def set_row_data(self, idx, data=None):
         if data is None:
@@ -106,9 +146,16 @@ class GradientDescentScenario(Scenario):
                 self.default_init_val,
                 self.default_min_val,
                 self.default_max_val,
+                "",
             ]
         for col, val in enumerate(data):
             self.var_table.setItem(idx, col, QTableWidgetItem(str(val)))
+
+    def update_calculated_values(self):
+        for row, val in enumerate(self.var_values):
+            self.var_table.setItem(
+                row, self.var_table.columnCount() - 1, QTableWidgetItem(str(val))
+            )
 
     def on_var_count_change(self):
         row_count = self.var_table.rowCount()
@@ -123,7 +170,6 @@ class GradientDescentScenario(Scenario):
                 self.var_table.removeRow(self.var_table.rowCount() - 1)
 
     def run(self):
-        """as of now evaluates formula with min values"""
         learning_rate = float(self.learning_rate_field.text())
         max_iter = int(self.max_iter_field.text())
         convergence = float(self.convergence_field.text())
@@ -131,16 +177,42 @@ class GradientDescentScenario(Scenario):
         self.formula_text = self.formula_field.text()
         self.retrieve_vars()
 
+        vars_values_history = []
+        formula_values_history = []
+
+        vars_values_history.append(self.var_values)
+        formula_values_history.append(self.calc_formula_value(self.var_values))
+
         try:
             for i in range(max_iter):
                 status, diff = self.make_step(learning_rate)
+
                 if status == 0:
                     break
+
+                vars_values_history.append(self.var_values)
+                formula_values_history.append(self.calc_formula_value(self.var_values))
+
+                if i % self.default_refresh_interval == 0:
+                    self.update_calculated_values()
+                    self.chart.update_chart(
+                        self.var_names, vars_values_history, formula_values_history
+                    )
+
                 if np.all(np.abs(diff) < convergence):
-                    print(f"Convergence criterium reached after {i+1} iterations.")
+                    self.output_field.setText(f"Convergence criterium reached after {i+1} iterations.")
                     break
-                print(f"Step {i}: {self.var_values}, diff: {diff}")
-            print(f"Reached max iteration steps")
+
+                # print(f"Step {i}: {self.var_values}, diff: {diff}")
+
+            if i == max_iter - 1:
+                self.output_field.setText(f"Max iterations reached.")
+
+            self.update_calculated_values()
+            self.chart.update_chart(
+                self.var_names, vars_values_history, formula_values_history
+            )
+
         except Exception as e:
             print(f"Error making steps: {e}")
 
@@ -186,7 +258,7 @@ class GradientDescentScenario(Scenario):
     def calc_gradient(self, var_values, gradient_step=1e-4):
         dim = len(var_values)
         gradient = np.empty(dim, dtype=np.float64)
-        
+
         for i in range(dim):
             shift = np.zeros(dim, dtype=np.float64)
             shift[i] = gradient_step
@@ -200,14 +272,43 @@ class GradientDescentScenario(Scenario):
         new_vars = self.var_values - learning_rate * self.calc_gradient(self.var_values)
 
         if np.any(new_vars < self.var_min_values):
-            print(
-                "Warning: some variables are below min values"
-            )  # throw exceptions instead, TODO later
+            self.output_field.setText("Some variables are below min values")
             return 0, ()
         if np.any(new_vars > self.var_max_values):
-            print("Warning: some variables are above max values")
+            self.output_field.setText("Some variables are above max values")
             return 0, ()
 
         diff = new_vars - self.var_values
         self.var_values = new_vars
         return 1, diff
+
+
+class GradientDescentChartWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.var_values_plot = pg.PlotWidget(title="Variables")
+        self.var_values_plot.setLabel("bottom", "Iterations")
+        self.var_values_plot.setLabel("left", "Value")
+
+        self.formula_values_plot = pg.PlotWidget(title="Formula Value")
+        self.formula_values_plot.setLabel("bottom", "Iterations")
+        self.formula_values_plot.setLabel("left", "Formula Value")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.var_values_plot)
+        layout.addWidget(self.formula_values_plot)
+        self.setLayout(layout)
+
+    def update_chart(self, var_names, var_values, formula_values):
+        self.var_values_plot.clear()
+        for i, var_name in enumerate(var_names):
+            self.var_values_plot.plot(
+                [v[i] for v in var_values], pen=pg.mkPen(i), name=var_name
+            )
+
+        self.formula_values_plot.clear()
+        self.formula_values_plot.plot(formula_values, pen=pg.mkPen("r"))
+
+        # update the plot
+        pg.QtCore.QCoreApplication.processEvents()
