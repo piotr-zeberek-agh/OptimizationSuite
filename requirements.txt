@@ -21,6 +21,7 @@ pyparsing==3.2.0
 PyQt6==6.7.1
 PyQt6-Qt6==6.7.3
 PyQt6_sip==13.8.0
+pyqtgraph==0.13.7
 python-dateutil==2.9.0.post0
 pytz==2024.2
 requests==2.32.3
