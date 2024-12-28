@@ -36,33 +36,23 @@ class PortfolioOptimizationScenario(Scenario):
         # self.interval_label.setFont(title_font)
         self.left_layout.addWidget(QLabel("Enter the interval for the data"))
 
-        self.row_4 = QHBoxLayout()
+        self.date_row = QHBoxLayout()
         self.start_date_line = QLineEdit()
         self.start_date_line.setPlaceholderText("Start (YYYY-MM-DD)")
-        self.row_4.addWidget(self.start_date_line)
+        self.date_row.addWidget(self.start_date_line)
         self.start_date_line.textChanged.connect(self.check_date_input)
         self.end_date_line = QLineEdit()
         self.end_date_line.setPlaceholderText("End (YYYY-MM-DD)")
-        self.row_4.addWidget(self.end_date_line)
+        self.date_row.addWidget(self.end_date_line)
         self.end_date_line.textChanged.connect(self.check_date_input)
-        self.left_layout.addLayout(self.row_4)
 
-        self.download_layout = QHBoxLayout()
         self.download_data_button = QPushButton()
         self.download_data_button.setText("Download Data")
         self.download_data_button.setEnabled(False)
         self.download_data_button.clicked.connect(self.download_data)
-        self.download_layout.addWidget(self.download_data_button)
-        self.filename_line = QLineEdit()
-        self.filename_line.setPlaceholderText("Enter filename")
-        self.download_layout.addWidget(self.filename_line)
-        self.filename_line.textChanged.connect(self.check_filename_input)
-        self.save_data_button = QPushButton()
-        self.save_data_button.setText("Save Data")
-        self.save_data_button.setEnabled(False)
-        self.save_data_button.clicked.connect(self.save_data)
-        self.download_layout.addWidget(self.save_data_button)
-        self.left_layout.addLayout(self.download_layout)
+        self.date_row.addWidget(self.download_data_button)
+
+        self.left_layout.addLayout(self.date_row)
 
         self.row_5 = QHBoxLayout()
         self.row_5.addWidget(QLabel("Enter your budget"))
@@ -82,6 +72,21 @@ class PortfolioOptimizationScenario(Scenario):
         self.clear_data_button.clicked.connect(self.clear_data)
         self.assets_buttons_layout.addWidget(self.clear_data_button)
         self.left_layout.addLayout(self.assets_buttons_layout)
+
+
+
+        self.download_layout = QHBoxLayout()
+        self.filename_line = QLineEdit()
+        self.filename_line.setPlaceholderText("Enter filename to save data from the selected interval")
+        self.download_layout.addWidget(self.filename_line)
+        self.filename_line.textChanged.connect(self.check_filename_input)
+        self.save_data_button = QPushButton()
+        self.save_data_button.setText("Save Data")
+        self.save_data_button.setEnabled(False)
+        self.save_data_button.clicked.connect(self.save_data)
+        self.download_layout.addWidget(self.save_data_button)
+        self.left_layout.addLayout(self.download_layout)
+
 
         self.run_button = QPushButton("Run")
         self.run_button.setEnabled(False)
@@ -143,7 +148,6 @@ class PortfolioOptimizationScenario(Scenario):
         self.run_button.setEnabled(True)
         
     def check_filename_input(self):
-        # filename = self.filename_line.text().strip()
         filename = self.filename_line.text().strip()
 
         if filename == '':
@@ -372,10 +376,26 @@ class PortfolioChartWidget(QWidget):
         super().__init__(parent)
 
         self.figure = Figure()
+        self.figure.set_facecolor("lightgrey")
         self.canvas = FigureCanvas(self.figure)
 
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)
+
+
+        self.figure2 = Figure()
+        self.figure2.set_facecolor("whitesmoke")
+        self.canvas2 = FigureCanvas(self.figure2)
+
+        layout.addWidget(self.canvas2)
+
+
+        self.figure3 = Figure()
+        self.figure3.set_facecolor("white")
+        self.canvas3 = FigureCanvas(self.figure3)
+
+        layout.addWidget(self.canvas3)
+
         self.setLayout(layout)
 
     def update_chart(self, weights, tickers):
