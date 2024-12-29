@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QHBoxLayout,
     QVBoxLayout,
+    QGridLayout,
     QLabel,
     QTableWidgetItem,
     QLineEdit,
@@ -13,13 +14,15 @@ from PyQt6.QtWidgets import (
 
 import numpy as np
 import pyqtgraph as pg
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
 def calc_r(first, second):
     return np.linalg.norm(first - second)
 
 
-def calc_r(i, j, atoms):
+def calc_r_idx(i: int, j: int, atoms):
     return calc_r(atoms[j], atoms[i])
 
 
@@ -80,7 +83,7 @@ class BrennerPotential:
         self.B_avg = np.zeros((size, size))
         self.V = np.zeros(size)
 
-    def __call__(self, atoms):
+    def get_V_tot(self, atoms):
         self.fill_r(atoms)
         self.fill_f_VR_VA()
         self.fill_B_avg(atoms)
@@ -90,7 +93,7 @@ class BrennerPotential:
     def fill_r(self, atoms):
         for i in range(self.n):
             for j in range(i + 1, self.n):
-                self.r[i, j] = self.r[j, i] = calc_r(i, j, atoms)
+                self.r[i, j] = self.r[j, i] = calc_r_idx(i, j, atoms)
 
     def fill_f_VR_VA(self):
         for i in range(self.n):
@@ -175,9 +178,8 @@ class BrennerPotential:
                                 - self.c0**2 / (self.d0**2 + (1.0 + cos_theta_jik) ** 2)
                             )
                         )
-
                 self.B_avg[i, j] = self.B_avg[j, i] = 0.5 * (
-                    (1.0 + xi_ij) ** (-self.delta) + (1.0 + xi_ji) ** (-self.delta)
+                    np.pow(1.0 + xi_ij, -self.delta) + np.pow(1.0 + xi_ji, -self.delta)
                 )
 
     def fill_V(self):
@@ -220,8 +222,8 @@ class BrennerPotential:
             r_ij = calc_r(atoms[i], atoms[j])
             if r_ij > self.R2 or i == j:
                 continue
-            V += self.calc_f[i, j] * (
-                self.calc_V_R[i, j] - self.calc_B_avg[i, j] * self.calc_V_A[i, j]
+            V += self.calc_f(r_ij) * (
+                self.calc_V_R(r_ij) - self.calc_B_avg(i, j, atoms) * self.calc_V_A(r_ij)
             )
         return V
 
@@ -248,7 +250,7 @@ class BrennerPotential:
                 break
 
             xi_ij += (
-                self.calc_f[i, k]
+                self.calc_f(r_ik)
                 * self.a0
                 * (self.g_prep - self.c0**2 / (self.d0**2 + (1.0 + cos_theta_ijk) ** 2))
             )
@@ -264,7 +266,7 @@ class BrennerPotential:
                 xi_ji += self.xi
             else:
                 xi_ji += (
-                    self.calc_f[j, k]
+                    self.calc_f(r_jk)
                     * self.a0
                     * (
                         self.g_prep
@@ -280,10 +282,10 @@ class Fullerene:
         self.n = size
         self.atoms = np.zeros((size, 3))
         self.atoms_spherical = np.zeros((size, 3))
-        self.v_tot = 0.0
-        self.r_avg = r
         self.init_atoms(r)
         self.brenner_potential = BrennerPotential(size, limit_bonds)
+        self.v_tot = self.brenner_potential.get_V_tot(self.atoms)
+        self.r_avg = r
 
     def init_atoms(self, r):
         for i in range(self.n):
@@ -331,7 +333,7 @@ class Fullerene:
             self.atoms[i] = to_cartesian(atom_new_spherical)
 
             if use_full_potential:
-                dV = self.brenner_potential(self.atoms) - self.v_tot
+                dV = self.brenner_potential.get_V_tot(self.atoms) - self.v_tot
             else:
                 dV = (
                     self.brenner_potential.calc_V(i, self.atoms)
@@ -350,7 +352,7 @@ class Fullerene:
                 self.atoms[i] = atom_old
 
         self.r_avg = self.calc_r_avg()
-        self.v_tot = self.brenner_potential(self.atoms)
+        self.v_tot = self.brenner_potential.get_V_tot(self.atoms)
 
         r_coeff = 1.0 + (2.0 * np.random.uniform() - 1.0) * W_all
 
@@ -359,7 +361,7 @@ class Fullerene:
         for atom in self.atoms:
             atom *= r_coeff
 
-        dV = self.brenner_potential(self.atoms) - self.v_tot
+        dV = self.brenner_potential.get_V_tot(self.atoms) - self.v_tot
 
         if dV <= 0.0:
             for atom in self.atoms_spherical:
@@ -388,13 +390,16 @@ class FullerenesStructureScenario(Scenario):
     def __init__(self, layout):
         super().__init__(layout)
         self.default_number_of_atoms = 60
-        self.default_min_val = -1
-        self.default_max_val = 1
-
-        self.var_names = []
-        self.var_values = np.array([])
-        self.var_min_values = np.array([])
-        self.var_max_values = np.array([])
+        self.default_init_r = 3.5
+        self.default_min_beta = 1
+        self.default_max_beta = 100
+        self.default_beta_exponent = 2
+        self.default_w_r = 1e-4
+        self.default_w_phi = 0.05
+        self.default_w_theta = 0.05
+        self.default_w_all = 1e-4
+        self.default_max_iter = 10000
+        self.default_refresh_interval = 10
 
         self.adjust_layout()
 
@@ -403,84 +408,49 @@ class FullerenesStructureScenario(Scenario):
         # left layout
         self.left_layout = QVBoxLayout()
 
-        self.var_count_label = QLabel("No. independent variables: ")
+        self.atom_count_spin_box = QSpinBox()
+        self.atom_count_spin_box.setRange(4, 80)
+        self.atom_count_spin_box.setValue(60)
+        self.atom_count_layout = QHBoxLayout()
+        self.atom_count_layout.addWidget(QLabel("No. atoms: "))
+        self.atom_count_layout.addWidget(self.atom_count_spin_box)
 
-        self.var_count_spin_box = QSpinBox()
-        self.var_count_spin_box.setRange(1, 100)
-        self.var_count_spin_box.setValue(1)
-        self.var_count_spin_box.valueChanged.connect(self.on_var_count_change)
+        self.left_layout.addLayout(self.atom_count_layout)
 
-        self.var_count_layout = QHBoxLayout()
-        self.var_count_layout.addWidget(QLabel("No. independent variables: "))
-        self.var_count_layout.addWidget(self.var_count_spin_box)
-
-        self.left_layout.addLayout(self.var_count_layout)
-
-        self.learning_rate_field = QLineEdit()
-        self.learning_rate_field.setText(str(self.default_learning_rate))
-
-        self.learning_rate_layout = QHBoxLayout()
-        self.learning_rate_layout.addWidget(QLabel("Learning rate: "))
-        self.learning_rate_layout.addWidget(self.learning_rate_field)
-
-        self.left_layout.addLayout(self.learning_rate_layout)
-
-        self.max_iter_field = QLineEdit()
-        self.max_iter_field.setText(str(self.default_max_iter))
-
-        self.max_iter_layout = QHBoxLayout()
-        self.max_iter_layout.addWidget(QLabel("Max iter: "))
-        self.max_iter_layout.addWidget(self.max_iter_field)
-
-        self.left_layout.addLayout(self.max_iter_layout)
-
-        self.convergence_field = QLineEdit()
-        self.convergence_field.setText(str(self.default_convergence))
-
-        self.convergence_layout = QHBoxLayout()
-        self.convergence_layout.addWidget(QLabel("Convergence: "))
-        self.convergence_layout.addWidget(self.convergence_field)
-
-        self.left_layout.addLayout(self.convergence_layout)
-
-        self.formula_label = QLabel("Formula: ")
-
-        self.formula_field = QLineEdit()
-        self.formula_field.setPlaceholderText("Enter formula (e.g. x1+4)")
-
-        self.formula_layout = QHBoxLayout()
-        self.formula_layout.addWidget(self.formula_label)
-        self.formula_layout.addWidget(self.formula_field)
-
-        self.left_layout.addLayout(self.formula_layout)
-
-        self.var_table = QTableWidget()
-        self.var_table.setColumnCount(5)
-        self.var_table.setHorizontalHeaderLabels(
-            [
-                "Variable Name",
-                "Initial value",
-                "Min. Value",
-                "Max. Value",
-                "Calc. Value",
-            ]
+        self.init_r_field, self.init_r_layout = self.add_field_input(
+            "Init r: ", self.default_init_r, self.left_layout
         )
-        self.var_table.setRowCount(1)
-        self.set_row_data(0)
-        self.var_table.setSizeAdjustPolicy(
-            QTableWidget.SizeAdjustPolicy.AdjustToContents
+        self.min_beta_field, self.min_beta_layout = self.add_field_input(
+            "Min beta: ", self.default_min_beta, self.left_layout
         )
-
-        self.left_layout.addWidget(self.var_table)
+        self.max_beta_field, self.max_beta_layout = self.add_field_input(
+            "Max beta: ", self.default_max_beta, self.left_layout
+        )
+        self.beta_exponent_field, self.beta_exponent_layout = self.add_field_input(
+            "Beta exponent: ", self.default_beta_exponent, self.left_layout
+        )
+        self.w_r_field, self.w_r_layout = self.add_field_input(
+            "w_r: ", self.default_w_r, self.left_layout
+        )
+        self.w_phi_field, self.w_phi_layout = self.add_field_input(
+            "w_phi: ", self.default_w_phi, self.left_layout
+        )
+        self.w_theta_field, self.w_theta_layout = self.add_field_input(
+            "w_theta: ", self.default_w_theta, self.left_layout
+        )
+        self.w_all_field, self.w_all_layout = self.add_field_input(
+            "w_all: ", self.default_w_all, self.left_layout
+        )
+        self.max_iter_field, self.max_iter_layout = self.add_field_input(
+            "Max iter: ", self.default_max_iter, self.left_layout
+        )
 
         self.output_label = QLabel("Output: ")
         self.output_field = QLineEdit()
         self.output_field.setReadOnly(True)
-
         self.output_layout = QHBoxLayout()
         self.output_layout.addWidget(self.output_label)
         self.output_layout.addWidget(self.output_field)
-
         self.left_layout.addLayout(self.output_layout)
 
         self.run_button = QPushButton("Run")
@@ -500,178 +470,100 @@ class FullerenesStructureScenario(Scenario):
 
         self.layout.addLayout(self.main_layout)
 
-    def set_row_data(self, idx, data=None):
-        if data is None:
-            data = [
-                f"x{idx+1}",
-                self.default_init_val,
-                self.default_min_val,
-                self.default_max_val,
-                "",
-            ]
-        for col, val in enumerate(data):
-            self.var_table.setItem(idx, col, QTableWidgetItem(str(val)))
-
-    def update_calculated_values(self):
-        for row, val in enumerate(self.var_values):
-            self.var_table.setItem(
-                row, self.var_table.columnCount() - 1, QTableWidgetItem(str(val))
-            )
-
-    def on_var_count_change(self):
-        row_count = self.var_table.rowCount()
-        spin_box_val = self.var_count_spin_box.value()
-
-        if spin_box_val > row_count:
-            for i in range(row_count, spin_box_val):
-                self.var_table.insertRow(i)
-                self.set_row_data(i)
-        elif spin_box_val < row_count:
-            for _ in range(row_count - spin_box_val):
-                self.var_table.removeRow(self.var_table.rowCount() - 1)
+    def add_field_input(self, label, default_value, layout):
+        field = QLineEdit()
+        field.setText(str(default_value))
+        field_layout = QHBoxLayout()
+        field_layout.addWidget(QLabel(label))
+        field_layout.addWidget(field)
+        layout.addLayout(field_layout)
+        return field, field_layout
 
     def run(self):
-        learning_rate = float(self.learning_rate_field.text())
+        atom_count = self.atom_count_spin_box.value()
+        init_r = float(self.init_r_field.text())
+        min_beta = float(self.min_beta_field.text())
+        max_beta = float(self.max_beta_field.text())
+        beta_exponent = float(self.beta_exponent_field.text())
+        w_r = float(self.w_r_field.text())
+        w_phi = float(self.w_phi_field.text())
+        w_theta = float(self.w_theta_field.text())
+        w_all = float(self.w_all_field.text())
         max_iter = int(self.max_iter_field.text())
-        convergence = float(self.convergence_field.text())
 
-        self.formula_text = self.formula_field.text()
-        self.retrieve_vars()
+        self.output_field.setText("Running...")
 
-        vars_values_history = []
-        formula_values_history = []
+        fullerene = Fullerene(atom_count, init_r)
 
-        vars_values_history.append(self.var_values)
-        formula_values_history.append(self.calc_formula_value(self.var_values))
+        beta_history = []
+        r_avg_history = []
+        v_tot_history = []
 
         try:
             for i in range(max_iter):
-                status, diff = self.make_step(learning_rate)
+                beta = (
+                    min_beta + (max_beta - min_beta) * (i / max_iter) ** beta_exponent
+                )
+                fullerene.try_shifting(beta, w_r, w_phi, w_theta, w_all)
 
-                if status == 0:
-                    break
-
-                vars_values_history.append(self.var_values)
-                formula_values_history.append(self.calc_formula_value(self.var_values))
+                beta_history.append(beta)
+                r_avg_history.append(fullerene.r_avg)
+                v_tot_history.append(fullerene.v_tot)
+                
+                print(fullerene.v_tot)
 
                 if i % self.default_refresh_interval == 0:
-                    self.update_calculated_values()
                     self.chart.update_chart(
-                        self.var_names, vars_values_history, formula_values_history
+                        beta_history, r_avg_history, v_tot_history, fullerene.atoms
                     )
 
-                if np.all(np.abs(diff) < convergence):
-                    self.output_field.setText(
-                        f"Convergence criterium reached after {i+1} iterations."
-                    )
-                    break
-
-                # print(f"Step {i}: {self.var_values}, diff: {diff}")
-
-            if i == max_iter - 1:
-                self.output_field.setText(f"Max iterations reached.")
-
-            self.update_calculated_values()
             self.chart.update_chart(
-                self.var_names, vars_values_history, formula_values_history
+                beta_history, r_avg_history, v_tot_history, fullerene.atoms
             )
 
         except Exception as e:
             print(f"Error making steps: {e}")
-
-    def retrieve_vars(self):
-        names, vinit, vmin, vmax = [], [], [], []
-
-        try:
-            for row in range(self.var_table.rowCount()):
-                var_name_item = self.var_table.item(row, 0)
-                var_vinit_item = self.var_table.item(row, 1)
-                var_vmin_item = self.var_table.item(row, 2)
-                var_vmax_item = self.var_table.item(row, 3)
-
-                if not var_name_item or not var_name_item.text():
-                    break
-
-                var_name = var_name_item.text()
-                var_vinit = float(var_vinit_item.text()) if var_vinit_item else 0
-                var_vmin = float(var_vmin_item.text()) if var_vmin_item else 0
-                var_vmax = float(var_vmax_item.text()) if var_vmax_item else 0
-
-                if var_name not in names:
-                    names.append(var_name)
-                    vinit.append(var_vinit)
-                    vmin.append(var_vmin)
-                    vmax.append(var_vmax)
-
-        except Exception as e:
-            print(f"Error retriving variables: {e}")
-
-        self.var_names = names
-        self.var_values = np.array(vinit)
-        self.var_min_values = np.array(vmin)
-        self.var_max_values = np.array(vmax)
-
-    def calc_formula_value(self, var_values):
-        try:
-            return eval(self.formula_text, dict(zip(self.var_names, var_values)))
-        except Exception as e:
-            print(f"Error evaluating formula: {e}")
-        return 0
-
-    def calc_gradient(self, var_values, gradient_step=1e-4):
-        dim = len(var_values)
-        gradient = np.empty(dim, dtype=np.float64)
-
-        for i in range(dim):
-            shift = np.zeros(dim, dtype=np.float64)
-            shift[i] = gradient_step
-            forward = self.calc_formula_value(var_values + shift)
-            backward = self.calc_formula_value(var_values - shift)
-            gradient[i] = forward - backward
-
-        return gradient / (2.0 * gradient_step)
-
-    def make_step(self, learning_rate):
-        new_vars = self.var_values - learning_rate * self.calc_gradient(self.var_values)
-
-        if np.any(new_vars < self.var_min_values):
-            self.output_field.setText("Some variables are below min values")
-            return 0, ()
-        if np.any(new_vars > self.var_max_values):
-            self.output_field.setText("Some variables are above max values")
-            return 0, ()
-
-        diff = new_vars - self.var_values
-        self.var_values = new_vars
-        return 1, diff
 
 
 class FullerenesStructureChartWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.var_values_plot = pg.PlotWidget(title="Variables")
-        self.var_values_plot.setLabel("bottom", "Iterations")
-        self.var_values_plot.setLabel("left", "Value")
+        self.beta_plot = pg.PlotWidget(title="Beta")
+        self.beta_plot.setLabel("bottom", "Iterations")
+        self.beta_plot.setLabel("left", "Value")
 
-        self.formula_values_plot = pg.PlotWidget(title="Formula Value")
-        self.formula_values_plot.setLabel("bottom", "Iterations")
-        self.formula_values_plot.setLabel("left", "Formula Value")
+        self.r_avg_plot = pg.PlotWidget(title="R avg")
+        self.r_avg_plot.setLabel("bottom", "Iterations")
+        self.r_avg_plot.setLabel("left", "Value")
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.var_values_plot)
-        layout.addWidget(self.formula_values_plot)
+        self.v_tot_plot = pg.PlotWidget(title="V tot")
+        self.v_tot_plot.setLabel("bottom", "Iterations")
+        self.v_tot_plot.setLabel("left", "Value")
+
+        self.structure_figure = Figure()
+        self.structure_canvas = FigureCanvas(self.structure_figure)
+
+        layout = QGridLayout()
+        layout.addWidget(self.beta_plot, 0, 0)
+        layout.addWidget(self.r_avg_plot, 0, 1)
+        layout.addWidget(self.v_tot_plot, 1, 0)
+        layout.addWidget(self.structure_canvas, 1, 1)
+
         self.setLayout(layout)
 
-    def update_chart(self, var_names, var_values, formula_values):
-        self.var_values_plot.clear()
-        for i, var_name in enumerate(var_names):
-            self.var_values_plot.plot(
-                [v[i] for v in var_values], pen=pg.mkPen(i), name=var_name
-            )
+    def update_chart(self, betas, r_avgs, v_tots, atoms):
+        for plot, vals in zip(
+            [self.beta_plot, self.r_avg_plot, self.v_tot_plot],
+            [betas, r_avgs, v_tots],
+        ):
+            plot.clear()
+            plot.plot(vals)
 
-        self.formula_values_plot.clear()
-        self.formula_values_plot.plot(formula_values, pen=pg.mkPen("r"))
+        self.structure_figure.clear()
+        ax = self.structure_figure.add_subplot(111, projection="3d")
+        ax.scatter(atoms[:, 0], atoms[:, 1], atoms[:, 2], c="r", marker="o")
+        
+        self.structure_canvas.draw()
 
-        # update the plot
         pg.QtCore.QCoreApplication.processEvents()
