@@ -1,7 +1,10 @@
 from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QPushButton
 from default_scenarios import (gradient_descent, fullerenes_structure, portfolio_optimization)
+
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QSize
 
 DEFAULT_SCENARIO_CLASSES = {
     "Gradient Descent": gradient_descent.GradientDescentScenario,
@@ -12,6 +15,17 @@ DEFAULT_SCENARIO_CLASSES = {
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        # self.setStyleSheet("""
+        #     QMainWindow {
+        #         background-color: #2f2f2f;  /* Space grey color */
+        #     }
+        #     QLabel {
+        #         color: white;  /* Text color */
+        #         font-size: 18px;
+        #     }
+        # """)
+
         self.current_scenario = None
         self.scenario_classes = DEFAULT_SCENARIO_CLASSES
         self.imported_scenario_classes = {}
@@ -28,6 +42,8 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1200, 800)
 
         self.central_widget = QWidget()
+        self.central_widget.setStyleSheet("background-color: black; color: white;")
+
         self.setCentralWidget(self.central_widget)
 
         self.scenario_choosing_layout = QHBoxLayout()
@@ -47,6 +63,34 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout.setAlignment(self.scenario_combo_box, Qt.AlignmentFlag.AlignRight)
 
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
+        ###################### preferencje do ustawienia ############################
+
+
+        # Przycisk trybu jasny/ciemny
+        self.dark_light_mode_button = QPushButton()
+        self.dark_light_mode_button.setIcon(QIcon("resources/images/mode.png"))
+        self.dark_light_mode_button.setIconSize(QSize(32, 32))
+        self.dark_light_mode_button.setToolTip("Zmień tryb jasny/ciemny")
+        self.dark_light_mode_button.setFixedSize(40, 40)
+        self.dark_light_mode_button.clicked.connect(self.toggle_dark_light_mode)
+
+        # Przycisk autozapisu
+        self.autosave_button = QPushButton()
+        self.autosave_button.setIcon(QIcon("resources/images/autosave.svg"))
+        self.autosave_button.setIconSize(QSize(32, 32))
+        self.autosave_button.setToolTip("Autosave jest wyłączony")
+        self.autosave_button.setFixedSize(40, 40)
+        self.autosave_button.setStyleSheet("border: 2px solid transparent;")
+        self.autosave_button.clicked.connect(self.toggle_autosave)
+        
+        self.scenario_choosing_layout.addWidget(self.dark_light_mode_button)
+        self.scenario_choosing_layout.addWidget(self.autosave_button)
+        
+        # Statusy
+        self.is_dark_mode = False
+        self.autosave_enabled = False
+
+        ##############################################
         self.scenario_choosing_layout.addWidget(self.scenario_combo_box)
         
         self.window_layout = QVBoxLayout()
@@ -99,3 +143,33 @@ class MainWindow(QMainWindow):
         from default_scenarios.gradient_descent import GradientDescentScenario
         self.current_scenario = GradientDescentScenario(self)
         
+
+
+    def toggle_dark_light_mode(self):
+        if self.is_dark_mode:
+            # Przełącz na tryb jasny
+            self.central_widget.setStyleSheet("background-color: white; color: black;")
+            # self.dark_light_mode_button.setIcon(QIcon("resources/images/light_mode.png"))
+            self.dark_light_mode_button.setToolTip("Włącz tryb ciemny")
+            self.statusBar().showMessage("Włączono tryb jasny", 2000)
+        else:
+            # Przełącz na tryb ciemny
+            self.central_widget.setStyleSheet("background-color: black; color: white;")
+            # self.dark_light_mode_button.setIcon(QIcon("resources/images/dark_mode.png"))
+            self.dark_light_mode_button.setToolTip("Włącz tryb jasny")
+            self.statusBar().showMessage("Włączono tryb ciemny", 2000)
+
+        self.is_dark_mode = not self.is_dark_mode
+
+    def toggle_autosave(self):
+        self.autosave_enabled = not self.autosave_enabled
+        if self.autosave_enabled:
+            # self.autosave_button.setIcon(QIcon("resources/images/autosave_on.png"))
+            self.autosave_button.setToolTip("Autosave jest włączony")
+            self.autosave_button.setStyleSheet("border: 2px solid orange;")
+            self.statusBar().showMessage("Autosave został włączony", 2000)
+        else:
+            # self.autosave_button.setIcon(QIcon("resources/images/autosave_off.png"))
+            self.autosave_button.setToolTip("Autosave jest wyłączony")
+            self.autosave_button.setStyleSheet("border: 2px solid transparent;")
+            self.statusBar().showMessage("Autosave został wyłączony", 2000)
