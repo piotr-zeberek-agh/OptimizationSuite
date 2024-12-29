@@ -16,24 +16,13 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # self.setStyleSheet("""
-        #     QMainWindow {
-        #         background-color: #2f2f2f;  /* Space grey color */
-        #     }
-        #     QLabel {
-        #         color: white;  /* Text color */
-        #         font-size: 18px;
-        #     }
-        # """)
-
         self.current_scenario = None
         self.scenario_classes = DEFAULT_SCENARIO_CLASSES
         self.imported_scenario_classes = {}
         
         self.set_base_layout()
         self.scenario_combo_box.setCurrentIndex(-1)
-        # tracks option changes in the combo box
-        self.scenario_combo_box.currentTextChanged.connect(self.on_scenario_change)
+        self.scenario_combo_box.currentTextChanged.connect(self.on_scenario_change) # tracks option changes in the combo box
 
     def set_base_layout(self):
         """Sets up the base layout with scenario label and combo box and combo box."""
@@ -65,7 +54,6 @@ class MainWindow(QMainWindow):
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
         ###################### preferencje do ustawienia ############################
 
-
         # Przycisk trybu jasny/ciemny
         self.dark_light_mode_button = QPushButton()
         self.dark_light_mode_button.setIcon(QIcon("resources/images/mode.png"))
@@ -87,7 +75,6 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout.addWidget(self.dark_light_mode_button)
         self.scenario_choosing_layout.addWidget(self.autosave_button)
         
-        # Statusy
         self.is_dark_mode = True
         self.autosave_enabled = True
 

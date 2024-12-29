@@ -1,7 +1,8 @@
 from scenario import Scenario
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QVBoxLayout, QDialog, QMessageBox, QListWidget, QLabel, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QAbstractItemView, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QDialog, QMessageBox, QListWidget, QLabel, QFileDialog, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QAbstractItemView, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import json
@@ -15,7 +16,6 @@ import re
 class PortfolioOptimizationScenario(Scenario):
     def __init__(self, layout):
         super().__init__(layout)
-        # self.is_data = False
         self.selected_options = None
         self.data = None
 
@@ -25,6 +25,7 @@ class PortfolioOptimizationScenario(Scenario):
         """Adjusts the layout to include elements for portfolio optimization."""
 
         title_font = QFont("Arial", 16, QFont.Weight.Bold)
+        interval_font = QFont("Lora", 12)
 
         # its because self.layout is a QVBoxLayout
         self.main_window = QHBoxLayout()
@@ -33,8 +34,9 @@ class PortfolioOptimizationScenario(Scenario):
         self.left_layout.setContentsMargins(0, 0, 0, 0)
         self.left_layout.setSpacing(10)
 
-        # self.interval_label.setFont(title_font)
-        self.left_layout.addWidget(QLabel("Enter the interval for the data"))
+        self.interval_label = QLabel("Fill out the section if you need data.")
+        self.interval_label.setFont(interval_font)
+        self.left_layout.addWidget(self.interval_label)
 
         self.date_row = QHBoxLayout()
         self.start_date_line = QLineEdit()
@@ -46,38 +48,21 @@ class PortfolioOptimizationScenario(Scenario):
         self.date_row.addWidget(self.end_date_line)
         self.end_date_line.textChanged.connect(self.check_date_input)
 
+        self.open_dialog_button = QPushButton("Choose Assets")
+        self.open_dialog_button.clicked.connect(self.open_selection_window)
+        self.date_row.addWidget(self.open_dialog_button)
+
+        self.left_layout.addLayout(self.date_row)
+
         self.download_data_button = QPushButton()
         self.download_data_button.setText("Download Data")
         self.download_data_button.setEnabled(False)
         self.download_data_button.clicked.connect(self.download_data)
-        self.date_row.addWidget(self.download_data_button)
-
-        self.left_layout.addLayout(self.date_row)
-
-        self.row_5 = QHBoxLayout()
-        self.row_5.addWidget(QLabel("Enter your budget"))
-        self.budget_line = QLineEdit()
-        self.budget_line.setPlaceholderText("")
-        self.row_5.addWidget(self.budget_line)
-        self.left_layout.addLayout(self.row_5)
-        
-        self.selected_table = QTableWidget()
-        self.left_layout.addWidget(self.selected_table)
-
-        self.assets_buttons_layout = QHBoxLayout()
-        self.open_dialog_button = QPushButton("Choose Assets")
-        self.open_dialog_button.clicked.connect(self.open_selection_window)
-        self.assets_buttons_layout.addWidget(self.open_dialog_button)
-        self.clear_data_button = QPushButton("Clear Assets")
-        self.clear_data_button.clicked.connect(self.clear_data)
-        self.assets_buttons_layout.addWidget(self.clear_data_button)
-        self.left_layout.addLayout(self.assets_buttons_layout)
-
-
+        self.left_layout.addWidget(self.download_data_button)
 
         self.download_layout = QHBoxLayout()
         self.filename_line = QLineEdit()
-        self.filename_line.setPlaceholderText("Enter filename to save data from the selected interval")
+        self.filename_line.setPlaceholderText("Enter filename")
         self.download_layout.addWidget(self.filename_line)
         self.filename_line.textChanged.connect(self.check_filename_input)
         self.save_data_button = QPushButton()
@@ -87,6 +72,40 @@ class PortfolioOptimizationScenario(Scenario):
         self.download_layout.addWidget(self.save_data_button)
         self.left_layout.addLayout(self.download_layout)
 
+        self.line_download = QFrame()
+        self.line_download.setFrameShape(QFrame.Shape.HLine)
+        self.line_download.setFrameShadow(QFrame.Shadow.Sunken)
+        self.left_layout.addWidget(self.line_download)
+
+
+        # LINE ------------------------------
+
+
+
+        # self.row_5 = QHBoxLayout()
+        # self.row_5.addWidget(QLabel("Enter your budget"))
+        # self.budget_line = QLineEdit()
+        # self.budget_line.setPlaceholderText("")
+        # self.row_5.addWidget(self.budget_line)
+        # self.left_layout.addLayout(self.row_5)
+        
+        self.selected_table = QTableWidget()
+        self.left_layout.addWidget(self.selected_table)
+
+        self.assets_buttons_layout = QHBoxLayout()
+
+        # self.open_dialog_button = QPushButton("Load Data", self)
+        # self.open_dialog_button.clicked.connect(self.load_data)
+        # self.assets_buttons_layout.addWidget(self.open_dialog_button)
+
+        self.open_dialog_button = QPushButton("Load Data")
+        self.open_dialog_button.clicked.connect(self.load_data)
+        self.left_layout.addWidget(self.open_dialog_button)
+
+        self.clear_data_button = QPushButton("Clear Assets")
+        self.clear_data_button.clicked.connect(self.clear_data)
+        self.assets_buttons_layout.addWidget(self.clear_data_button)
+        self.left_layout.addLayout(self.assets_buttons_layout)
 
         self.run_button = QPushButton("Run")
         self.run_button.setEnabled(False)
@@ -108,12 +127,11 @@ class PortfolioOptimizationScenario(Scenario):
 
         self.right_layout.addWidget(self.chart_widget)
 
-        self.assets_label = QLabel("Assets Values")
-        self.assets_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        self.assets_label.setFixedWidth(250)
-        self.assets_label.setFont(title_font)
-        self.right_layout.addWidget(self.assets_label)
+        # self.assets_label = QLabel("Assets Values")
+        # self.assets_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        # self.assets_label.setFixedWidth(250)
+        # self.assets_label.setFont(title_font)
+        # self.right_layout.addWidget(self.assets_label)
 
         self.portfolio_table = QTableWidget()
         self.portfolio_table.setRowCount(5)
@@ -180,10 +198,53 @@ class PortfolioOptimizationScenario(Scenario):
         self.save_data_button.setEnabled(False) 
         self.selected_options = None
         self.data = None
+        self.chart_widget.clear_chart()
 
     def load_data(self):
-        pass
+        try:
+            # Wywołanie okna dialogowego do wyboru pliku
+            # file_name, _ = QFileDialog.getOpenFileName(
+            #     self.layout.parentWidget(), "Select CSV File", "data/", "CSV Files (*.csv);;All Files (*)" # okreslamy rodzica
+            # )
+            file_name, _ = QFileDialog.getOpenFileName(
+                None, "Select CSV File", "data/", "CSV Files (*.csv);;All Files (*)"
+            )
+            if not file_name:
+                print("No file selected!")
+                return
 
+            file_data = pd.read_csv(file_name)
+
+            if file_data.columns[0] == 'Date':
+                self.data = file_data.iloc[:, 1:]
+                self.date = file_data.iloc[:, 0]
+            # self.data = pd.read_csv(file_name)
+
+            # Konwertowanie wszystkich kolumn na numeryczne (w przypadku, gdy są tekstowe)
+            # Jeśli nie można przekonwertować, wartość zostanie ustawiona na NaN
+            self.data = self.data.apply(pd.to_numeric, errors='coerce')
+
+            # Sprawdzenie, jakie typy danych znajdują się w DataFrame
+            print(self.data.dtypes)
+
+            # Ustawienie tabeli w UI
+            self.selected_table.setRowCount(len(self.data))
+            self.selected_table.setColumnCount(len(self.data.columns))
+            self.selected_table.setHorizontalHeaderLabels(self.data.columns)
+
+            # Wypełnianie tabeli danymi z DataFrame
+            for row in range(len(self.data)):
+                for col in range(len(self.data.columns)):
+                    item = QTableWidgetItem(str(self.data.iloc[row, col]))
+                    self.selected_table.setItem(row, col, item)
+
+            print(f"Data successfully loaded from {file_name}!")
+
+        except Exception as e:
+            print(f"Error loading data: {e}")
+
+        if self.data is not None:
+            self.run_button.setEnabled(True)
 
     def open_selection_window(self):
         """Function to open a dialog for selecting assets"""
@@ -209,18 +270,11 @@ class PortfolioOptimizationScenario(Scenario):
 # # ---------------------- Annealing ------------------
     def run(self):
         """Simulates portfolio optimization and updates the chart."""
-        # self.budget = self.budget_line.text()
-
-        # Load data
-        # filename = "data/stocks.csv"
-        # print(f"Loading data from file: {filename}")
-        # data = pd.read_csv(filename, index_col=0, parse_dates=True)
-
         self.num_days = len(self.data)
 
-        self.returns = self.data.pct_change().dropna()
-        expected_returns = self.returns.mean() * self.num_days
-        covariance_matrix = self.returns.cov() * self.num_days
+        self.returns = self.data.pct_change(fill_method=None).dropna()
+        self.expected_returns = self.returns.mean() * self.num_days
+        self.covariance_matrix = self.returns.cov() * self.num_days
 
         # print("\nExpected annual returns:\n", expected_returns)
         # print("\nAnnual covariance matrix:\n", covariance_matrix)
@@ -230,8 +284,8 @@ class PortfolioOptimizationScenario(Scenario):
         # Perform optimization
         optimal_portfolio, optimal_sharpe = self.simulated_annealing_portfolio(
             assets=tickers,
-            expected_returns=expected_returns.values,
-            covariance_matrix=covariance_matrix.values,
+            expected_returns=self.expected_returns.values,
+            covariance_matrix=self.covariance_matrix.values,
             risk_free_rate=0.02,
             max_iter=20000,
             initial_temperature=100,
@@ -239,26 +293,18 @@ class PortfolioOptimizationScenario(Scenario):
             max_allocation=0.25,
             min_allocation=0.0
         )
-
-        # # Print optimal portfolio allocation
-        # print("\nOptimal portfolio:")
-        # for ticker, allocation in zip(tickers, optimal_portfolio):
-        #     print(f"{ticker}: {allocation:.2%}")
-        # print(f"\nOptimal Sharpe ratio: {optimal_sharpe:.4f}")
-
-        # Plot portfolio allocation as a pie chart
-        # plt.figure(figsize=(8, 8))
-        # plt.pie(
-        #     optimal_portfolio,
-        #     labels=tickers,
-        #     autopct='%1.1f%%',
-        #     startangle=140,
-        #     colors=plt.cm.tab20.colors
-        # )
-        # plt.title("Optimal Portfolio Allocation")
-        # plt.show()
-
-        self.chart_widget.update_chart(optimal_portfolio, tickers)
+        
+        self.chart_widget.update_chart(optimal_portfolio, tickers, optimal_sharpe) # zaktualizowanie wykresu
+        self.portfolio_table.setRowCount(len(self.expected_returns))                                # Zaktualizowanie tabeli danymi
+        for i, asset in enumerate(self.expected_returns.index): # Dla każdego aktywa
+            if abs(self.expected_returns[asset]) > 1e-7:
+                self.portfolio_table.setItem(i, 0, QTableWidgetItem(asset))  # Nazwa aktywa1            #
+                expected_return = f"{self.expected_returns[asset]:.6f}"
+                self.portfolio_table.setItem(i, 1, QTableWidgetItem(expected_return))  # Oczekiwany zwrot  #
+                risk_level = self.calculate_risk_level(asset)  # Obliczamy poziom ryzyka
+                # Formatuj poziom ryzyka do dokładności 1e-6, jeśli ma sens
+                risk_level_formatted = f"{risk_level:.6f}" if isinstance(risk_level, (float, np.float64)) else str(risk_level)
+                self.portfolio_table.setItem(i, 2, QTableWidgetItem(risk_level_formatted))  # Poziom ryzyka
 
 
     def simulated_annealing_portfolio(self, assets, expected_returns, covariance_matrix, 
@@ -288,6 +334,11 @@ class PortfolioOptimizationScenario(Scenario):
 
         return best_portfolio, best_sharpe
 
+    def calculate_risk_level(self, asset):
+        """Obliczanie poziomu ryzyka dla aktywa na podstawie macierzy kowariancji."""
+        # Na przykład możemy obliczyć ryzyko jako wariancję z macierzy kowariancji
+        return self.covariance_matrix.loc[asset, asset]
+    
     def calculate_sharpe(self, weights, expected_returns, covariance_matrix, risk_free_rate=0):
         """Function to calculate the Sharpe ratio of a portfolio."""
         portfolio_return = np.dot(weights, expected_returns)
@@ -371,77 +422,68 @@ class SelectionDialog(QDialog):
         return selected_options
 
 ## ---------------------- Chart Widget ------------------
+class DataWindow(QWidget):
+    def __init__(self, data):
+        super().__init__()
+        
+        self.setWindowTitle("Loaded Data")
+        self.setGeometry(100, 100, 600, 400)
+        
+        # Tworzenie widgetu QTableWidget do wyświetlenia danych
+        self.table_widget = QTableWidget(self)
+        self.table_widget.setRowCount(len(data))
+        self.table_widget.setColumnCount(len(data.columns))
+        self.table_widget.setHorizontalHeaderLabels(data.columns)
+        
+        # Wypełnienie tabeli danymi
+        for row in range(len(data)):
+            for col in range(len(data.columns)):
+                item = QTableWidgetItem(str(data.iloc[row, col]))
+                self.table_widget.setItem(row, col, item)
+        
+        # Układ layoutu
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.table_widget)
+        self.setLayout(layout)
+
 class PortfolioChartWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-
         self.figure = Figure()
-        self.figure.set_facecolor("lightgrey")
+        self.figure.set_facecolor("whitesmoke")
         self.canvas = FigureCanvas(self.figure)
-
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)
-
-
-        self.figure2 = Figure()
-        self.figure2.set_facecolor("whitesmoke")
-        self.canvas2 = FigureCanvas(self.figure2)
-
-        layout.addWidget(self.canvas2)
-
-
-        self.figure3 = Figure()
-        self.figure3.set_facecolor("white")
-        self.canvas3 = FigureCanvas(self.figure3)
-
-        layout.addWidget(self.canvas3)
-
         self.setLayout(layout)
 
-    def update_chart(self, weights, tickers):
+    def update_chart(self, weights, tickers, sharpe_ratio):
         """Aktualizuje wykres kołowy na podstawie nowych danych."""
         self.figure.clear()
         ax = self.figure.add_subplot(111)
+        # Rysowanie wykresu kołowego
         ax.pie(
             weights, 
             labels=tickers, 
             autopct='%1.1f%%', 
             startangle=90
         )
+        
+        #ax.set_title(f"Portfolio Sharpe Ratio: {sharpe_ratio:.4f}")
+        # wyswietl to w tej cancie w lewym dolnym rogu
+        ax.text(
+            0.0,0.0,  # Współrzędne (x, y) dokładnie w lewym dolnym rogu
+            f"Portfolio Sharpe Ratio: {sharpe_ratio:.4f}",
+            horizontalalignment='left',  # Tekst wyrównany do lewej
+            verticalalignment='bottom',  # Tekst wyrównany do dołu
+            transform=ax.transAxes  # W układzie współrzędnych osi
+        )
+
+
         ax.set_title("Portfolio Distribution")
         self.canvas.draw()
 
 
-# # ---------------------- Data ------------------
-
-    # def download_data(self):
-    #     self.tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "SPY", "BABA"]
-    #     self.start_date = "2022-01-01"
-    #     self.end_date = "2024-10-31"
-    #     self.data = yf.download(self.tickers, start=self.start_date, end=self.end_date)['Adj Close']
-    #     if self.data is not None:
-    #         self.isDataLoaded = True
-    #     else:
-    #         print("Cannot download data!")
-
-    # def save_csv(self, data, file_name: str):
-    #     data.to_csv(file_name)
-    #     print(f"Data saved in {file_name}")
-
-    # def load_csv(self, window, file_name: str):
-    #     try:
-    #         self.data = pd.read_csv(file_name)
-    #         if self.data is not None:
-    #             self.isDataLoaded = True
-    #         else:
-    #             print("Cannot load data!")
-    #         window.table_widget.setRowCount(len(self.data))
-    #         window.table_widget.setColumnCount(len(self.data.columns))
-    #         window.table_widget.setHorizontalHeaderLabels(self.data.columns)
-
-    #         for row in range(len(self.data)):
-    #             for col in range(len(self.data.columns)):
-    #                 item = QTableWidgetItem(str(self.data.iloc[row, col]))
-    #                 window.table_widget.setItem(row, col, item)
-    #     except Exception as e:
-    #         print(f"Error loading data: {e}")
+    def clear_chart(self):
+        """Czysci wykres."""
+        self.figure.clear()
+        self.canvas.draw()

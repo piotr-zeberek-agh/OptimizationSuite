@@ -5,6 +5,12 @@ def accept_move(current, new, temperature):
     if new > current:
         return True
     else:
-        probability = np.exp((new - current) / temperature)
+        if temperature < 1e-7:
+            probability = np.exp((new - current) / temperature)
+        else:
+            probability = 0
+
         return np.random.rand() < probability
     
+
+
