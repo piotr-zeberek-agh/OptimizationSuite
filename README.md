@@ -39,11 +39,12 @@ Graphical user interface for performing optimization tasks in Python. The main g
  
 ### Week 5 (06.01 - 12.01)
 
-- Multi-run option (compare results across multiple runs for different set of parameters)
+- Results exporting (plots, tables, etc.) in different formats
+- debugging
 
 ### Week 6 (13.01 - 19.01)
 
-- Results exporting (plots, tables, etc.) in different formats
+- additional functionalities, packaging in installer/exec
 
 ### Week 7 (20.01 - 24.01)
 

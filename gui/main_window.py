@@ -52,13 +52,20 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout.setAlignment(self.scenario_combo_box, Qt.AlignmentFlag.AlignRight)
 
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
-        ###################### preferencje do ustawienia ############################
+
+        # Przycisk pomocy
+        self.help_button = QPushButton()
+        self.help_button.setIcon(QIcon("resources/images/help.png"))
+        self.help_button.setIconSize(QSize(32, 32))
+        self.help_button.setToolTip("Show help")
+        self.help_button.setFixedSize(40, 40)
+        self.help_button.clicked.connect(self.help_button_clicked)
 
         # Przycisk trybu jasny/ciemny
         self.dark_light_mode_button = QPushButton()
         self.dark_light_mode_button.setIcon(QIcon("resources/images/mode.png"))
         self.dark_light_mode_button.setIconSize(QSize(32, 32))
-        self.dark_light_mode_button.setToolTip("Zmień tryb jasny")
+        self.dark_light_mode_button.setToolTip("Change to light mode")
         self.dark_light_mode_button.setFixedSize(40, 40)
         self.dark_light_mode_button.clicked.connect(self.toggle_dark_light_mode)
 
@@ -72,6 +79,7 @@ class MainWindow(QMainWindow):
         self.autosave_button.clicked.connect(self.toggle_autosave)
         self.autosave_button.setStyleSheet("border: 2px solid orange;")
 
+        self.scenario_choosing_layout.addWidget(self.help_button)
         self.scenario_choosing_layout.addWidget(self.dark_light_mode_button)
         self.scenario_choosing_layout.addWidget(self.autosave_button)
         
@@ -134,23 +142,29 @@ class MainWindow(QMainWindow):
     def toggle_dark_light_mode(self):
         if self.is_dark_mode:
             self.central_widget.setStyleSheet("background-color: white; color: black;")
-            self.dark_light_mode_button.setToolTip("Włącz tryb ciemny")
-            self.statusBar().showMessage("Włączono tryb jasny", 2000)
+            self.dark_light_mode_button.setToolTip("Turn on dark mode")
+            self.statusBar().showMessage("Light mode enabled", 2000)
         else:
             self.central_widget.setStyleSheet("background-color: #2f2f2f; color: white;")
             # self.dark_light_mode_button.setIcon(QIcon("resources/images/dark_mode.png"))
-            self.dark_light_mode_button.setToolTip("Włącz tryb jasny")
-            self.statusBar().showMessage("Włączono tryb ciemny", 2000)
+            self.dark_light_mode_button.setToolTip("Turn on light mode")
+            self.statusBar().showMessage("Dark mode enabled", 2000)
         self.is_dark_mode = not self.is_dark_mode
 
     def toggle_autosave(self):
         if self.autosave_enabled:
-            self.autosave_button.setToolTip("Autosave jest wyłączony")
+            self.autosave_button.setToolTip("Autosave is disabled")
             self.autosave_button.setStyleSheet("border: 2px solid transparent;")
-            self.statusBar().showMessage("Autosave został wyłączony", 2000)
+            self.statusBar().showMessage("Autosave has been disabled", 2000)
         else:
-            self.autosave_button.setToolTip("Autosave jest włączony")
+            self.autosave_button.setToolTip("Autosave is enabled")
             self.autosave_button.setStyleSheet("border: 2px solid orange;")
-            self.statusBar().showMessage("Autosave został włączony", 2000)
+            self.statusBar().showMessage("Autosave has been enabled", 2000)
         self.autosave_enabled = not self.autosave_enabled
 
+    def help_button_clicked(self):
+        help_window = QMainWindow()
+        help_window.setWindowTitle("Help")
+        help_window.setGeometry(200, 200, 800, 600)
+        help_window.setStyleSheet("background-color: #2f2f2f; color: white;")
+        help_window.show()

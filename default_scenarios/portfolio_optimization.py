@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import random
 import re
+import os
 
 class PortfolioOptimizationScenario(Scenario):
     def __init__(self, layout):
@@ -24,7 +25,7 @@ class PortfolioOptimizationScenario(Scenario):
     def adjust_layout(self):
         """Adjusts the layout to include elements for portfolio optimization."""
 
-        title_font = QFont("Arial", 16, QFont.Weight.Bold)
+        # title_font = QFont("Arial", 16, QFont.Weight.Bold)
         interval_font = QFont("Lora", 12)
 
         # its because self.layout is a QVBoxLayout
@@ -106,6 +107,7 @@ class PortfolioOptimizationScenario(Scenario):
         self.clear_data_button.clicked.connect(self.clear_data)
         self.assets_buttons_layout.addWidget(self.clear_data_button)
         self.left_layout.addLayout(self.assets_buttons_layout)
+        # self.clear_data
 
         self.run_button = QPushButton("Run")
         self.run_button.setEnabled(False)
@@ -202,10 +204,6 @@ class PortfolioOptimizationScenario(Scenario):
 
     def load_data(self):
         try:
-            # Wywołanie okna dialogowego do wyboru pliku
-            # file_name, _ = QFileDialog.getOpenFileName(
-            #     self.layout.parentWidget(), "Select CSV File", "data/", "CSV Files (*.csv);;All Files (*)" # okreslamy rodzica
-            # )
             file_name, _ = QFileDialog.getOpenFileName(
                 None, "Select CSV File", "data/", "CSV Files (*.csv);;All Files (*)"
             )
@@ -224,8 +222,8 @@ class PortfolioOptimizationScenario(Scenario):
             # Jeśli nie można przekonwertować, wartość zostanie ustawiona na NaN
             self.data = self.data.apply(pd.to_numeric, errors='coerce')
 
-            # Sprawdzenie, jakie typy danych znajdują się w DataFrame
-            print(self.data.dtypes)
+            # DEBUG: Sprawdzenie, jakie typy danych znajdują się w DataFrame
+            # print(self.data.dtypes)
 
             # Ustawienie tabeli w UI
             self.selected_table.setRowCount(len(self.data))
@@ -261,7 +259,6 @@ class PortfolioOptimizationScenario(Scenario):
                         q_item.setFlags(q_item.flags() & ~Qt.ItemFlag.ItemIsEditable)   # blokowanie komorek
                         self.selected_table.setItem(j, i, q_item) 
                 if self.selected_options:
-                    # self.are_options = True
                     self.check_date_input()
                     
         except Exception as e:
@@ -298,9 +295,9 @@ class PortfolioOptimizationScenario(Scenario):
         self.portfolio_table.setRowCount(len(self.expected_returns))                                # Zaktualizowanie tabeli danymi
         for i, asset in enumerate(self.expected_returns.index): # Dla każdego aktywa
             if abs(self.expected_returns[asset]) > 1e-7:
-                self.portfolio_table.setItem(i, 0, QTableWidgetItem(asset))  # Nazwa aktywa1            #
+                self.portfolio_table.setItem(i, 0, QTableWidgetItem(asset))  # Nazwa aktywa
                 expected_return = f"{self.expected_returns[asset]:.6f}"
-                self.portfolio_table.setItem(i, 1, QTableWidgetItem(expected_return))  # Oczekiwany zwrot  #
+                self.portfolio_table.setItem(i, 1, QTableWidgetItem(expected_return))  # Oczekiwany zwrot
                 risk_level = self.calculate_risk_level(asset)  # Obliczamy poziom ryzyka
                 # Formatuj poziom ryzyka do dokładności 1e-6, jeśli ma sens
                 risk_level_formatted = f"{risk_level:.6f}" if isinstance(risk_level, (float, np.float64)) else str(risk_level)
@@ -445,6 +442,7 @@ class DataWindow(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.table_widget)
         self.setLayout(layout)
+        
 
 class PortfolioChartWidget(QWidget):
     def __init__(self, parent=None):
@@ -455,35 +453,44 @@ class PortfolioChartWidget(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)
         self.setLayout(layout)
+        self.clear_chart()
 
     def update_chart(self, weights, tickers, sharpe_ratio):
         """Aktualizuje wykres kołowy na podstawie nowych danych."""
-        self.figure.clear()
+        self.clear_chart()
         ax = self.figure.add_subplot(111)
-        # Rysowanie wykresu kołowego
+
         ax.pie(
             weights, 
             labels=tickers, 
             autopct='%1.1f%%', 
             startangle=90
         )
-        
-        #ax.set_title(f"Portfolio Sharpe Ratio: {sharpe_ratio:.4f}")
-        # wyswietl to w tej cancie w lewym dolnym rogu
         ax.text(
-            0.0,0.0,  # Współrzędne (x, y) dokładnie w lewym dolnym rogu
+            0.0,0.0,
             f"Portfolio Sharpe Ratio: {sharpe_ratio:.4f}",
-            horizontalalignment='left',  # Tekst wyrównany do lewej
-            verticalalignment='bottom',  # Tekst wyrównany do dołu
+            horizontalalignment='left',  # do lewej
+            verticalalignment='bottom',  # do dołu
             transform=ax.transAxes  # W układzie współrzędnych osi
         )
-
-
-        ax.set_title("Portfolio Distribution")
         self.canvas.draw()
 
+    def save_chart(self, file_path="wallet\ results/chart.png"):
+        """Zapisuje wykres do pliku."""
+        if file_path is None:
+            file_path = os.path.join("wallet results", "chart.png")
+            
+            # Tworzenie folderu, jeśli nie istnieje
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+            self.figure.savefig(file_path)
+            print(f"Chart saved to file: {file_path}")
 
     def clear_chart(self):
         """Czysci wykres."""
         self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        ax.set_title("Portfolio Distribution")
+        ax.set_xticks([])
+        ax.set_yticks([])
         self.canvas.draw()
