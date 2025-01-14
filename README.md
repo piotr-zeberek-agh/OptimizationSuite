@@ -41,6 +41,7 @@ Graphical user interface for performing optimization tasks in Python. The main g
 
 - Results exporting (plots, tables, etc.) in different formats
 - debugging
+- au
 
 ### Week 6 (13.01 - 19.01)
 
