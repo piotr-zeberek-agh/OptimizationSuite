@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QPushButton
 from default_scenarios import (gradient_descent, fullerenes_structure, portfolio_optimization)
+from help import HelpWindow
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
@@ -54,12 +55,14 @@ class MainWindow(QMainWindow):
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
 
         # Przycisk pomocy
+        help_me_window = HelpWindow()
+
         self.help_button = QPushButton()
         self.help_button.setIcon(QIcon("resources/images/help.png"))
         self.help_button.setIconSize(QSize(32, 32))
         self.help_button.setToolTip("Show help")
         self.help_button.setFixedSize(40, 40)
-        self.help_button.clicked.connect(self.help_button_clicked)
+        self.help_button.clicked.connect(self.show_help_window)
 
         # Przycisk trybu jasny/ciemny
         self.dark_light_mode_button = QPushButton()
@@ -103,6 +106,11 @@ class MainWindow(QMainWindow):
         # self.window_layout.addWidget(self.run_button)
 
         self.central_widget.setLayout(self.window_layout)
+
+    def show_help_window(self):
+        """Pokazuje okno pomocy."""
+        help_me_window = HelpWindow(self)
+        help_me_window.show_help()
 
     def on_scenario_change(self):
         """Handle the scenario selection event."""

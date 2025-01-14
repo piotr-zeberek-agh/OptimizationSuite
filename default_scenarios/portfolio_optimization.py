@@ -1,7 +1,7 @@
 from scenario import Scenario
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QVBoxLayout, QDialog, QMessageBox, QListWidget, QLabel, QFileDialog, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QAbstractItemView, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QDialog, QMessageBox, QListWidget, QLabel, QStackedWidget, QFileDialog, QDialogButtonBox, QListWidgetItem, QTableWidgetItem, QAbstractItemView, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -13,6 +13,7 @@ import pandas as pd
 import random
 import re
 import os
+from PyQt6.QtGui import QPixmap, QIcon
 
 class PortfolioOptimizationScenario(Scenario):
     def __init__(self, layout):
@@ -95,9 +96,6 @@ class PortfolioOptimizationScenario(Scenario):
 
         self.assets_buttons_layout = QHBoxLayout()
 
-        # self.open_dialog_button = QPushButton("Load Data", self)
-        # self.open_dialog_button.clicked.connect(self.load_data)
-        # self.assets_buttons_layout.addWidget(self.open_dialog_button)
 
         self.open_dialog_button = QPushButton("Load Data")
         self.open_dialog_button.clicked.connect(self.load_data)
@@ -123,27 +121,44 @@ class PortfolioOptimizationScenario(Scenario):
         self.mid_layout.addWidget(self.middle_line)
 
         # Right layout
+        # dodatkowe :
+        # Scenariusze ryzyka:Zwrot portfela w warunkach rynkowych (np. 10% spadek indeksu, kryzys, wysoka inflacja).
+        # Średnia roczna stopa zwrotu (%): Uśredniona wartość zwrotów portfela w długim okresie.
+        # Layout dla zakładek w lewej części
+
+        tab_button_1 = QPushButton()
+        tab_button_1.setIcon(QIcon(QPixmap("resources/images/tab_1.png")))
+        tab_button_1.clicked.connect(lambda: self.switch_tab(0))
+
+        tab_button_2 = QPushButton()
+        tab_button_2.setIcon(QIcon(QPixmap("resources/images/tab_2.png")))
+        tab_button_2.clicked.connect(lambda: self.switch_tab(1))
+
+        # Dodanie zakładek do lewego layoutu
+        self.tabs_layout = QHBoxLayout()
+        self.tabs_layout.addWidget(tab_button_1)
+        self.tabs_layout.addWidget(tab_button_2)
+        self.left_layout.addLayout(self.tabs_layout)
 
         self.right_layout = QVBoxLayout()
+
+        self.stacked_widget = QStackedWidget()
         self.chart_widget = PortfolioChartWidget()
+        self.stacked_widget.addWidget(self.chart_widget)
 
-        self.right_layout.addWidget(self.chart_widget)
-
-        # self.assets_label = QLabel("Assets Values")
-        # self.assets_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        # self.assets_label.setFixedWidth(250)
-        # self.assets_label.setFont(title_font)
-        # self.right_layout.addWidget(self.assets_label)
+        # self.right_layout.addWidget(self.chart_widget)
+        self.right_layout.addWidget(self.stacked_widget)
 
         self.portfolio_table = QTableWidget()
         self.portfolio_table.setRowCount(5)
         self.portfolio_table.setColumnCount(3)
-        self.portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Expected Return", "Risk Level"])
+        self.portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Allocation", "Expected Return", "Risk", "Beta", "Sharpe Ratio", "Treynor Ratio"])
+        # SHARE RATIO oddzielny dla kazdego aktywaw okresie 
         self.right_layout.addWidget(self.portfolio_table)
 
         self.main_window.addLayout(self.left_layout)
         self.main_window.addLayout(self.mid_layout)
-        self.main_window.addLayout(self.right_layout)
+        self.main_window.addLayout(self.right_layout, stretch=1)
         self.layout.addLayout(self.main_window)
 
     def check_date_input(self):
@@ -166,7 +181,17 @@ class PortfolioOptimizationScenario(Scenario):
         end_date = self.end_date_line.text()
         self.data = fetch_data(self.selected_options, start_date, end_date)
         self.run_button.setEnabled(True)
-        
+
+    def switch_tab(self, index):
+        """Funkcja zmieniająca widoczny widget w stacked widget"""
+        self.stacked_widget.setCurrentIndex(index)
+
+    def show_widget_visibility(self):
+        """Funkcja pokazująca widoczność widgetu w stacked widget"""
+        current_widget = self.stacked_widget.currentWidget()
+        visibility = "visible" if current_widget.isVisible() else "hidden"
+        print(f"Current widget visibility: {visibility}")        
+
     def check_filename_input(self):
         filename = self.filename_line.text().strip()
 
