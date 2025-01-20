@@ -8,8 +8,8 @@ class HelpWindow(QDialog):
         self.setGeometry(100, 100, 400, 300)  # Określenie rozmiaru okna
 
         layout = QVBoxLayout()
-        help_label = QLabel("Witaj w aplikacji optymalizacji portfela!\n\n"
-                            "Poniżej znajduje się wprowadzenia do jego funkcji.\n"
+        help_label = QLabel("Witaj w aplikacji optymalizacji portfela!\n\n" +
+                            "Poniżej znajduje się wprowadzenia do jego funkcji.\n")
         layout.addWidget(help_label)
 
         self.setLayout(layout)
