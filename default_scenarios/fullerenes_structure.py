@@ -10,6 +10,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot
+import time
+
 import numpy as np
 import pyqtgraph as pg
 from matplotlib.figure import Figure
@@ -304,6 +307,8 @@ class Fullerene:
         self.brenner_potential.limit_bonds = False
 
     def try_shifting(self, beta, w_r, w_phi, w_theta, W_all, use_full_potential=False):
+
+        # Shifting individual atoms
         for i in range(self.n):
             atom_old = self.atoms[i].copy()
             atom_old_spherical = self.atoms_spherical[i].copy()
@@ -350,6 +355,7 @@ class Fullerene:
             else:
                 self.atoms[i] = atom_old
 
+        # Shifting all atoms simultaneously
         self.r_avg = self.calc_r_avg()
         self.v_tot = self.brenner_potential.get_V_tot(self.atoms)
 
@@ -385,20 +391,109 @@ class Fullerene:
         self.atoms = atoms_old
 
 
+class FullereneWorkerThread(QThread):
+    progress_signal = pyqtSignal(str, list, list, list, np.ndarray)
+    final_message = "Finished."
+    stop_message = "Stopped."
+
+    def __init__(
+        self,
+        fullerene,
+        min_beta,
+        max_beta,
+        beta_exponent,
+        w_r,
+        w_phi,
+        w_theta,
+        w_all,
+        max_iter,
+        retrive_interval,
+    ):
+        super().__init__()
+        self.fullerene = fullerene
+        self.min_beta = min_beta
+        self.max_beta = max_beta
+        self.beta_exponent = beta_exponent
+        self.w_r = w_r
+        self.w_phi = w_phi
+        self.w_theta = w_theta
+        self.w_all = w_all
+        self.max_iter = max_iter
+        self.retrive_interval = retrive_interval
+        self.running = True
+
+    def run(self):
+        beta_history = []
+        r_avg_history = []
+        v_tot_history = []
+
+        for i in range(self.max_iter):
+            if not self.running:
+                self.progress_signal.emit(
+                    self.stop_message,
+                    beta_history,
+                    r_avg_history,
+                    v_tot_history,
+                    self.fullerene.atoms,
+                )
+                break
+
+            beta = (
+                self.min_beta
+                + (self.max_beta - self.min_beta)
+                * (i / self.max_iter) ** self.beta_exponent
+            )
+            self.fullerene.try_shifting(
+                beta, self.w_r, self.w_phi, self.w_theta, self.w_all
+            )
+
+            beta_history.append(beta)
+            r_avg_history.append(float(self.fullerene.r_avg))
+            v_tot_history.append(float(self.fullerene.v_tot))
+
+            if i % self.retrive_interval == 0:
+                self.progress_signal.emit(
+                    f"{i} iterations",
+                    beta_history,
+                    r_avg_history,
+                    v_tot_history,
+                    self.fullerene.atoms,
+                )
+
+        if self.running:
+            self.progress_signal.emit(
+                self.final_message,
+                beta_history,
+                r_avg_history,
+                v_tot_history,
+                self.fullerene.atoms,
+            )
+
+    def stop(self):
+        self.running = False
+
+
 class FullerenesStructureScenario(Scenario):
     def __init__(self, layout):
         super().__init__(layout)
         self.default_number_of_atoms = 60
-        self.default_init_r = 3.5
+        self.default_init_r = 3.3
         self.default_min_beta = 1
         self.default_max_beta = 100
         self.default_beta_exponent = 2
         self.default_w_r = 1e-4
         self.default_w_phi = 0.05
         self.default_w_theta = 0.05
-        self.default_w_all = 1e-4
-        self.default_max_iter = 10000
-        self.default_refresh_interval = 10
+        self.default_w_all = 5e-4
+        self.default_nn_scaling = 0.5
+        self.default_max_iter = 1000
+        self.default_refresh_interval = 5
+
+        self.worker_thread = None
+        self.beta_history = []
+        self.r_avg_history = []
+        self.v_tot_history = []
+        self.structure = None
 
         self.adjust_layout()
 
@@ -440,8 +535,16 @@ class FullerenesStructureScenario(Scenario):
         self.w_all_field, self.w_all_layout = self.add_field_input(
             "w_all: ", self.default_w_all, self.left_layout
         )
+        self.nn_scaling_field, self.nn_scaling_layout = self.add_field_input(
+            "NN scaling: ", self.default_nn_scaling, self.left_layout
+        )
         self.max_iter_field, self.max_iter_layout = self.add_field_input(
             "Max iter: ", self.default_max_iter, self.left_layout
+        )
+        self.refresh_interval_field, self.refresh_interval_layout = (
+            self.add_field_input(
+                "Refresh interval: ", self.default_refresh_interval, self.left_layout
+            )
         )
 
         self.output_label = QLabel("Output: ")
@@ -456,6 +559,11 @@ class FullerenesStructureScenario(Scenario):
         self.run_button.clicked.connect(self.run)
 
         self.left_layout.addWidget(self.run_button)
+
+        self.stop_button = QPushButton("Stop")
+        self.stop_button.clicked.connect(self.stop)
+        self.stop_button.setEnabled(False)
+        self.left_layout.addWidget(self.stop_button)
 
         # right layout
         self.right_layout = QVBoxLayout()
@@ -479,6 +587,14 @@ class FullerenesStructureScenario(Scenario):
         return field, field_layout
 
     def run(self):
+        self.run_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+
+        self.beta_history = []
+        self.r_avg_history = []
+        self.v_tot_history = []
+        self.structure = None
+
         atom_count = self.atom_count_spin_box.value()
         init_r = float(self.init_r_field.text())
         min_beta = float(self.min_beta_field.text())
@@ -489,39 +605,46 @@ class FullerenesStructureScenario(Scenario):
         w_theta = float(self.w_theta_field.text())
         w_all = float(self.w_all_field.text())
         max_iter = int(self.max_iter_field.text())
+        refresh_interval = int(self.refresh_interval_field.text())
 
-        self.output_field.setText("Running...")
-
+        self.chart.nn_scaling = float(self.nn_scaling_field.text())
         fullerene = Fullerene(atom_count, init_r)
 
-        beta_history = []
-        r_avg_history = []
-        v_tot_history = []
+        self.worker_thread = FullereneWorkerThread(
+            fullerene,
+            min_beta,
+            max_beta,
+            beta_exponent,
+            w_r,
+            w_phi,
+            w_theta,
+            w_all,
+            max_iter,
+            refresh_interval,
+        )
 
-        try:
-            for i in range(max_iter):
-                beta = (
-                    min_beta + (max_beta - min_beta) * (i / max_iter) ** beta_exponent
-                )
-                fullerene.try_shifting(beta, w_r, w_phi, w_theta, w_all)
+        self.worker_thread.progress_signal.connect(self.update_data)
 
-                beta_history.append(beta)
-                r_avg_history.append(fullerene.r_avg)
-                v_tot_history.append(float(fullerene.v_tot))
+        self.output_field.setText("Starting...")
+        self.worker_thread.start()
 
-                print(float(fullerene.v_tot))
+    def update_data(self, message, beta_history, r_avg_history, v_tot_history, atoms):
+        self.output_field.setText(message)
+        self.beta_history = beta_history
+        self.r_avg_history = r_avg_history
+        self.v_tot_history = v_tot_history
+        self.chart.update(
+            self.beta_history, self.r_avg_history, self.v_tot_history, atoms
+        )
 
-                if i % self.default_refresh_interval == 0:
-                    self.chart.update_chart(
-                        beta_history, r_avg_history, v_tot_history, fullerene.atoms
-                    )
+        if message == FullereneWorkerThread.final_message:
+            self.stop()
 
-            self.chart.update_chart(
-                beta_history, r_avg_history, v_tot_history, fullerene.atoms
-            )
-
-        except Exception as e:
-            print(f"Error making steps: {e}")
+    def stop(self):
+        if self.worker_thread:
+            self.worker_thread.stop()
+        self.run_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
 
 
 class FullerenesStructureChartWidget(QWidget):
@@ -540,6 +663,7 @@ class FullerenesStructureChartWidget(QWidget):
         self.v_tot_plot.setLabel("bottom", "Iterations")
         self.v_tot_plot.setLabel("left", "Value")
 
+        self.nn_scaling = 0.5
         self.structure_figure = Figure()
         self.structure_canvas = FigureCanvas(self.structure_figure)
 
@@ -551,7 +675,7 @@ class FullerenesStructureChartWidget(QWidget):
 
         self.setLayout(layout)
 
-    def update_chart(self, betas, r_avgs, v_tots, atoms):
+    def update(self, betas, r_avgs, v_tots, atoms):
         for plot, vals in zip(
             [self.beta_plot, self.r_avg_plot, self.v_tot_plot],
             [betas, r_avgs, v_tots],
@@ -559,15 +683,39 @@ class FullerenesStructureChartWidget(QWidget):
             plot.clear()
             plot.plot(vals)
 
+        self.plot_fullerene_structure(atoms, r_avgs[-1])
+        pg.QtCore.QCoreApplication.processEvents()
+
+    def plot_fullerene_structure(self, atoms, r_avg):
+        x, y, z = atoms[:, 0], atoms[:, 1], atoms[:, 2]
+        nn_dist = self.nn_scaling * r_avg
+
         self.structure_figure.clear()
         ax = self.structure_figure.add_subplot(111, projection="3d")
-        ax.scatter(atoms[:, 0], atoms[:, 1], atoms[:, 2], c="r", marker="o")
 
+        # Plot vertices
+        ax.scatter(x, y, z, c="r", marker="o")
+
+        # Plot edges
+        for i in range(len(x)):
+            for j in range(i + 1, len(x)):
+                dist = np.sqrt(
+                    (x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2 + (z[i] - z[j]) ** 2
+                )
+                if dist <= nn_dist:
+                    ax.plot([x[i], x[j]], [y[i], y[j]], [z[i], z[j]], c="b")
+
+        # adjust view
         max_range = np.ceil(np.max(atoms))
         ax.set_xlim([-max_range, max_range])
         ax.set_ylim([-max_range, max_range])
         ax.set_zlim([-max_range, max_range])
 
-        self.structure_canvas.draw()
+        ax.set_box_aspect([1, 1, 1])
 
-        pg.QtCore.QCoreApplication.processEvents()
+        ax.set_title("Fullerene structure")
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+
+        self.structure_canvas.draw()
