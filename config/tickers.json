@@ -8,8 +8,8 @@
         "GOVT", "SHY", "AGG", "SPAB", "VCLT"
     ],
     "Commodities": [
-        "GOLD", "SILVER", "OIL", "COPPER", "NATGAS", 
-        "PLATINUM", "PALLADIUM", "WHEAT", "CORN", "SOYBEAN"
+        "GC=F", "SI=F", "CL=F", "HG=F", "NG=F", 
+        "PL=F", "PA=F", "ZW=F", "ZC=F", "ZS=F"
     ],
     "ETFs": [
         "SPY", "VTI", "IVV", "QQQ", "IWM", 
@@ -20,7 +20,7 @@
         "USDCAD=X", "NZDUSD=X", "EURGBP=X", "EURJPY=X", "GBPJPY=X"
     ],
     "Indexes": [
-        "SPX", "DJIA", "NASDAQ", "RUSSELL2000", "FTSE100", 
-        "NIKKEI225", "DAX", "CAC40", "HSI", "ASX200"
+        "^GSPC", "^DJI", "^IXIC", "^RUT", "^FTSE", 
+        "^N225", "^GDAXI", "^FCHI", "^HSI", "^AXJO"
     ]
 }

@@ -1,0 +1,12 @@
+{
+    "GC=F": "Gold (Futures)",
+    "SI=F": "Silver (Futures)",
+    "CL=F": "Crude (Futures)",
+    "HG=F": "Copper (Futures)",
+    "NG=F": "Natural Gas (Futures)",
+    "PL=F": "Platinum (Futures)",
+    "PA=F": "Palladium (Futures)",
+    "ZW=F": "Wheat (Futures)",
+    "ZC=F": "Corn (Futures)",
+    "ZS=F": "Soybeans (Futures)"
+}

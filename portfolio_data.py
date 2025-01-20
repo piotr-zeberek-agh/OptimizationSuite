@@ -17,14 +17,15 @@ def fetch_data(tickers_by_category, start_date, end_date):
         elif category == "Indexes":
             data = fetch_index_data(tickers, start_date, end_date)
         else:
-            # print(f"No data fetcher for category: {category}")
+            print(f"No data fetcher for category: {category}")
             continue
         all_data.append(data)
 
     combined_data = pd.concat(all_data, axis=1)
     return combined_data
 
-
+# Funkcje miają takie same działanie, ale różnią się kategoriami aktywów, 
+# w przypadku zastosowania pojedycznej metody jest błąd
 def fetch_stock_data(tickers, start_date, end_date):
     data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
     return data
@@ -37,13 +38,14 @@ def fetch_commodity_data(tickers, start_date, end_date):
     data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
     return data
 
-
-
 def fetch_etf_data(tickers, start_date, end_date):
-    pass
+    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+    return data
 
 def fetch_currency_data(tickers, start_date, end_date):
-    pass
+    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+    return data
 
 def fetch_index_data(tickers, start_date, end_date):
-    pass
+    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+    return data

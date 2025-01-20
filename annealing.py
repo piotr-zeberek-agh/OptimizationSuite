@@ -11,6 +11,3 @@ def accept_move(current, new, temperature):
             probability = 0
 
         return np.random.rand() < probability
-    
-
-

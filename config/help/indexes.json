@@ -1,0 +1,12 @@
+{
+    "^GSPC": "S&P 500 Index",
+    "^DJI": "Dow Jones Industrial Average",
+    "^IXIC": "Nasdaq Composite",
+    "^RUT": "Russell 2000 Index",
+    "^FTSE": "FTSE 100 Index",
+    "^N225": "Nikkei 225",
+    "^GDAXI": "DAX Performance-Index",
+    "^FCHI": "CAC 40",
+    "^HSI": "Hang Seng Index",
+    "^AXJO": "S&P/ASX 200"
+}

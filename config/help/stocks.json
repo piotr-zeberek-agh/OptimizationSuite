@@ -1,0 +1,12 @@
+{
+    "AAPL - Apple Inc.": "Manufacturer of electronic devices (iPhone, iPad, MacBook) and software.",
+    "MSFT - Microsoft Corporation": "Software company (Windows, Office, Azure) and hardware (Surface, Xbox).",
+    "GOOGL - Alphabet Inc. (Google)": "Search engine, advertising, cloud computing, and hardware.",
+    "AMZN - Amazon.com, Inc.": "E-commerce, cloud computing, digital streaming, and artificial intelligence.",
+    "TSLA - Tesla, Inc.": "Electric vehicle manufacturer and clean energy company.",
+    "META - Meta Platforms, Inc.": "Social media company (Facebook, Instagram, WhatsApp, Oculus).",
+    "NVDA - NVIDIA Corporation": "Graphics processing units (GPUs) for gaming, professional visualization, and artificial intelligence.",
+    "NFLX - Netflix, Inc.": "Streaming service for movies and TV shows.",
+    "AMD - Advanced Micro Devices, Inc.": "Semiconductor company for CPUs and GPUs.",
+    "SPY - SPDR S&P 500 ETF Trust": "Tracks the S&P 500 index of large-cap U.S. stocks."
+}

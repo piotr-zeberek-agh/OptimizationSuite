@@ -1,0 +1,12 @@
+{
+    "EURUSD=X": "Currency Pair Euro / US Dollar (EUR/USD)", 
+    "GBPUSD=X": "Currency Pair British Pound / US Dollar (GBP/USD)",
+    "USDJPY=X": "Currency Pair US Dollar / Japanese Yen (USD/JPY)",
+    "AUDUSD=X": "Currency Pair Australian Dollar / US Dollar (AUD/USD)",
+    "USDCHF=X": "Currency Pair US Dollar / Swiss Franc (USD/CHF)",
+    "USDCAD=X": "Currency Pair US Dollar / Canadian Dollar (USD/CAD)",
+    "NZDUSD=X": "Currency Pair New Zealand Dollar / US Dollar (NZD/USD)",
+    "EURGBP=X": "Currency Pair Euro / British Pound (EUR/GBP)",
+    "EURJPY=X": "Currency Pair Euro / Japanese Yen (EUR/JPY)",
+    "GBPJPY=X": "Currency Pair British Pound / Japanese Yen (GBP/JPY)"
+}
