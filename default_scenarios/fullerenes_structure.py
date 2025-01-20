@@ -486,7 +486,7 @@ class FullerenesStructureScenario(Scenario):
         self.default_w_theta = 0.05
         self.default_w_all = 1e-4
         self.default_nn_scaling = 0.5
-        self.default_max_iter = 1000
+        self.default_max_iter = 5000
         self.default_refresh_interval = 5
 
         self.worker_thread = None

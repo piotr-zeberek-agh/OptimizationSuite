@@ -26,7 +26,7 @@ class GradientDescentScenario(Scenario):
         self.default_convergence = 1e-6
         self.default_refresh_interval = 10
 
-        self.formula_text = "0"
+        self.formula_text = "x1**2-x1+1"
 
         self.var_names = []
         self.var_values = np.array([])
@@ -83,7 +83,7 @@ class GradientDescentScenario(Scenario):
         self.formula_label = QLabel("Formula: ")
 
         self.formula_field = QLineEdit()
-        self.formula_field.setPlaceholderText("Enter formula (e.g. x1+4)")
+        self.formula_field.setText(self.formula_text)
 
         self.formula_layout = QHBoxLayout()
         self.formula_layout.addWidget(self.formula_label)
