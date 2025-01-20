@@ -477,14 +477,14 @@ class FullerenesStructureScenario(Scenario):
     def __init__(self, layout):
         super().__init__(layout)
         self.default_number_of_atoms = 60
-        self.default_init_r = 3.3
+        self.default_init_r = 3.4
         self.default_min_beta = 1
         self.default_max_beta = 100
         self.default_beta_exponent = 2
         self.default_w_r = 1e-4
         self.default_w_phi = 0.05
         self.default_w_theta = 0.05
-        self.default_w_all = 5e-4
+        self.default_w_all = 1e-4
         self.default_nn_scaling = 0.5
         self.default_max_iter = 1000
         self.default_refresh_interval = 5
