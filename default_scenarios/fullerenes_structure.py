@@ -1,12 +1,10 @@
 from scenario import Scenario
 from PyQt6.QtWidgets import (
-    QTableWidget,
     QSpinBox,
     QHBoxLayout,
     QVBoxLayout,
     QGridLayout,
     QLabel,
-    QTableWidgetItem,
     QLineEdit,
     QPushButton,
     QWidget,
@@ -73,8 +71,8 @@ class BrennerPotential:
         self.c0 = c0
         self.d0 = d0
 
-        self.V_coeff = 0
-        self.g_prep = 0
+        self.V_coeff = De / (S - 1.0)
+        self.g_prep = 1 + c0 * c0 / d0 / d0
 
         self.r = np.zeros((size, size))
         self.f = np.zeros((size, size))
