@@ -114,38 +114,12 @@ class MainWindow(QMainWindow):
 
     def on_scenario_change(self):
         """Handle the scenario selection event."""
+        if self.current_scenario is not None:
+            self.current_scenario.stop()
+            
         scenario_name = self.scenario_combo_box.currentText()
         self.scenario_label.setText(scenario_name)
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
-
-        # self.run_button.clicked.connect(self.current_scenario.run)
-        # print(f"Selected scenario: {selected_scenario}")
-
-        # self.clear_layout()
-        # self.set_base_layout(selected_scenario)
-        # self.combo_box.currentTextChanged.connect(self.on_scenario_change)
-
-        # if selected_scenario == "Structure Of Fullerenes":
-        #     self.setup_fullerenes()
-        # elif selected_scenario == "Portfolio Optimization":
-        #     self.setup_portfolio()
-        # elif selected_scenario == "Gradient Descent":
-        #     self.setup_gradient()
-
-    def setup_fullerenes(self):
-        """Set up the Structure Of Fullerenes scenario."""
-        from default_scenarios.fullerenes_structure import FullerenesStructureScenario
-        # self.current_scenario = FullerenesStructureScenario(self)
-
-    def setup_portfolio(self):
-        """Set up the Portfolio Optimization scenario."""
-        from default_scenarios.portfolio_optimization import PortfolioOptimizationScenario
-        self.current_scenario = PortfolioOptimizationScenario(self)
-
-    def setup_gradient(self):
-        """Set up the Gradient Descent scenario."""
-        from default_scenarios.gradient_descent import GradientDescentScenario
-        self.current_scenario = GradientDescentScenario(self)
 
     def toggle_dark_light_mode(self):
         if self.is_dark_mode:

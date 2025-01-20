@@ -211,6 +211,9 @@ class GradientDescentScenario(Scenario):
 
         except Exception as e:
             print(f"Error making steps: {e}")
+            
+    def stop(self):
+        pass
 
     def retrieve_vars(self):
         names, vinit, vmin, vmax = [], [], [], []

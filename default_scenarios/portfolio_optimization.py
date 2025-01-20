@@ -328,6 +328,8 @@ class PortfolioOptimizationScenario(Scenario):
                 risk_level_formatted = f"{risk_level:.6f}" if isinstance(risk_level, (float, np.float64)) else str(risk_level)
                 self.portfolio_table.setItem(i, 2, QTableWidgetItem(risk_level_formatted))  # Poziom ryzyka
 
+    def stop(self):
+        pass
 
     def simulated_annealing_portfolio(self, assets, expected_returns, covariance_matrix, 
         risk_free_rate=0, max_iter=10000, initial_temperature=100, 
