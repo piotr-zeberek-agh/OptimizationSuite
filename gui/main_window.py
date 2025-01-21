@@ -1,6 +1,9 @@
 from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QPushButton
 from default_scenarios import (gradient_descent, fullerenes_structure, portfolio_optimization)
-from help import HelpWindow
+from help_portfolio import HelpWindowPortfolio
+from help_fullerenes import HelpWindowFullerenes
+from help_gradient import HelpWindowGradient
+from help_default import HelpWindowDefault
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
@@ -54,15 +57,13 @@ class MainWindow(QMainWindow):
 
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
 
-        # Przycisk pomocy
-        help_me_window = HelpWindow()
-
         self.help_button = QPushButton()
         self.help_button.setIcon(QIcon("resources/images/help.png"))
         self.help_button.setIconSize(QSize(32, 32))
         self.help_button.setToolTip("Show help")
         self.help_button.setFixedSize(40, 40)
-        self.help_button.clicked.connect(self.show_help_window)
+        self.help_button.setStyleSheet("border: 2px solid transparent;")
+        self.help_button.clicked.connect(self.help_button_clicked)
 
         # Przycisk trybu jasny/ciemny
         self.dark_light_mode_button = QPushButton()
@@ -120,7 +121,7 @@ class MainWindow(QMainWindow):
     def setup_fullerenes(self):
         """Set up the Structure Of Fullerenes scenario."""
         from default_scenarios.fullerenes_structure import FullerenesStructureScenario
-        # self.current_scenario = FullerenesStructureScenario(self)
+        self.current_scenario = FullerenesStructureScenario(self)
 
     def setup_portfolio(self):
         """Set up the Portfolio Optimization scenario."""
@@ -156,8 +157,15 @@ class MainWindow(QMainWindow):
         self.autosave_enabled = not self.autosave_enabled
 
     def help_button_clicked(self):
-        help_window = QMainWindow()
-        help_window.setWindowTitle("Help")
-        help_window.setGeometry(200, 200, 800, 600)
-        help_window.setStyleSheet("background-color: #2f2f2f; color: white;")
-        help_window.show()
+        """Create and show the help window."""
+        scenario_name = self.scenario_combo_box.currentText()
+        if scenario_name == "Gradient Descent":
+            self.help_window = HelpWindowGradient(self)
+        elif scenario_name == "Structure Of Fullerenes":
+            self.help_window = HelpWindowFullerenes(self)
+        if scenario_name == "Portfolio Optimization":
+            self.help_window = HelpWindowPortfolio(self)
+        else:
+            self.help_window = HelpWindowDefault(self)
+        self.help_window.show()
+
