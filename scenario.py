@@ -13,6 +13,10 @@ class Scenario(ABC):
     def run(self):
         pass
     
+    @abstractmethod
+    def stop(self):
+        pass
+    
     def clear_layout(self):
         """Clear all widgets and layouts in the current layout."""
         for i in reversed(range(self.layout.count())):

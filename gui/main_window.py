@@ -109,9 +109,13 @@ class MainWindow(QMainWindow):
 
     def on_scenario_change(self):
         """Handle the scenario selection event."""
+        if self.current_scenario is not None:
+            self.current_scenario.stop()
+            
         scenario_name = self.scenario_combo_box.currentText()
         self.scenario_label.setText(scenario_name)
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
+
 
     def setup_fullerenes(self):
         """Set up the Structure Of Fullerenes scenario."""
