@@ -46,7 +46,7 @@ class BrennerPotential:
     def __init__(
         self,
         size,
-        limit_bonds=False,
+        limit_bonds=True,
         xi=10.0,
         R0=1.315,
         R1=1.70,
@@ -118,6 +118,7 @@ class BrennerPotential:
                 self.V_R[i, j] = self.V_R[j, i] = self.V_coeff * np.exp(
                     -np.sqrt(2.0 * self.S) * arg
                 )
+
                 self.V_A[i, j] = self.V_A[j, i] = (
                     self.V_coeff * self.S * np.exp(-np.sqrt(2.0 / self.S) * arg)
                 )
@@ -274,11 +275,11 @@ class BrennerPotential:
                     )
                 )
 
-        return 0.5 * ((1.0 + xi_ij) ** -self.delta + (1.0 + xi_ji) ** -self.delta)
+        return 0.5 * ((1.0 + xi_ij) ** (-self.delta) + (1.0 + xi_ji) ** -self.delta)
 
 
 class Fullerene:
-    def __init__(self, size, r, limit_bonds=False):
+    def __init__(self, size, r, limit_bonds=True):
         self.n = size
         self.atoms = np.zeros((size, 3))
         self.atoms_spherical = np.zeros((size, 3))
@@ -290,7 +291,7 @@ class Fullerene:
     def init_atoms(self, r):
         for i in range(self.n):
             self.atoms_spherical[i] = np.array(
-                [r, 2 * np.pi * np.random.uniform(), np.pi / 2 * np.random.uniform()]
+                [r, 2 * np.pi * np.random.uniform(), np.pi * np.random.uniform()]
             )
             self.atoms[i] = to_cartesian(self.atoms_spherical[i])
 
@@ -508,9 +509,9 @@ class FullerenesStructureScenario(Scenario):
 
                 beta_history.append(beta)
                 r_avg_history.append(fullerene.r_avg)
-                v_tot_history.append(fullerene.v_tot)
-                
-                print(fullerene.v_tot)
+                v_tot_history.append(float(fullerene.v_tot))
+
+                print(float(fullerene.v_tot))
 
                 if i % self.default_refresh_interval == 0:
                     self.chart.update_chart(
@@ -563,7 +564,12 @@ class FullerenesStructureChartWidget(QWidget):
         self.structure_figure.clear()
         ax = self.structure_figure.add_subplot(111, projection="3d")
         ax.scatter(atoms[:, 0], atoms[:, 1], atoms[:, 2], c="r", marker="o")
-        
+
+        max_range = np.ceil(np.max(atoms))
+        ax.set_xlim([-max_range, max_range])
+        ax.set_ylim([-max_range, max_range])
+        ax.set_zlim([-max_range, max_range])
+
         self.structure_canvas.draw()
 
         pg.QtCore.QCoreApplication.processEvents()

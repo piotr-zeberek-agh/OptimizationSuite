@@ -8,7 +8,13 @@ class HelpWindow(QDialog):
         self.setWindowTitle("Help")
         self.setGeometry(100, 100, 400, 300)
         layout = QVBoxLayout()
+<<<<<<< HEAD
         self.tab_widget = QTabWidget()
+=======
+        help_label = QLabel("Witaj w aplikacji optymalizacji portfela!\n\n" +
+                            "Poniżej znajduje się wprowadzenia do jego funkcji.\n")
+        layout.addWidget(help_label)
+>>>>>>> 6a22c9a7c8e6bbf4ec397cdddafde0c4a8347b2c
 
         self.stocks_help = self.load_help_data("config/help/stocks.json")
         self.bonds_help = self.load_help_data("config/help/bonds.json")
