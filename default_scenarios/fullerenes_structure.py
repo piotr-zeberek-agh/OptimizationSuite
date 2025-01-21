@@ -11,12 +11,13 @@ from PyQt6.QtWidgets import (
 )
 
 from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot
-import time
 
 import numpy as np
 import pyqtgraph as pg
+import pyqtgraph.exporters as pg_exporters
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from pathlib import Path
 
 
 def calc_r(first, second):
@@ -557,7 +558,6 @@ class FullerenesStructureScenario(Scenario):
 
         self.run_button = QPushButton("Run")
         self.run_button.clicked.connect(self.run)
-
         self.left_layout.addWidget(self.run_button)
 
         self.stop_button = QPushButton("Stop")
@@ -565,10 +565,15 @@ class FullerenesStructureScenario(Scenario):
         self.stop_button.setEnabled(False)
         self.left_layout.addWidget(self.stop_button)
 
+        self.save_plots_button = QPushButton("Save plots")
+        self.left_layout.addWidget(self.save_plots_button)
+
         # right layout
         self.right_layout = QVBoxLayout()
         self.chart = FullerenesStructureChartWidget()
         self.right_layout.addWidget(self.chart)
+
+        self.save_plots_button.clicked.connect(self.chart.save)
 
         # main layout
         self.main_layout = QHBoxLayout()
@@ -589,6 +594,7 @@ class FullerenesStructureScenario(Scenario):
     def run(self):
         self.run_button.setEnabled(False)
         self.stop_button.setEnabled(True)
+        self.chart.clear()
 
         self.beta_history = []
         self.r_avg_history = []
@@ -663,6 +669,8 @@ class FullerenesStructureChartWidget(QWidget):
         self.v_tot_plot.setLabel("bottom", "Iterations")
         self.v_tot_plot.setLabel("left", "Value")
 
+        self.qt_plots = [self.beta_plot, self.r_avg_plot, self.v_tot_plot]
+
         self.nn_scaling = 0.5
         self.structure_figure = Figure()
         self.structure_canvas = FigureCanvas(self.structure_figure)
@@ -677,20 +685,35 @@ class FullerenesStructureChartWidget(QWidget):
 
     def update(self, betas, r_avgs, v_tots, atoms):
         for plot, vals in zip(
-            [self.beta_plot, self.r_avg_plot, self.v_tot_plot],
+            self.qt_plots,
             [betas, r_avgs, v_tots],
         ):
-            plot.clear()
             plot.plot(vals)
 
         self.plot_fullerene_structure(atoms, r_avgs[-1])
         pg.QtCore.QCoreApplication.processEvents()
 
+    def clear(self):
+        for plot in self.qt_plots:
+            plot.clear()
+
+        self.structure_figure.clear()
+
+    def save(self):
+        folder_path = "results/fullerenes_structure/"
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
+
+        for plot, filename in zip(
+            self.qt_plots, ["beta.png", "r_avg.png", "v_tot.png"]
+        ):
+            pg_exporters.ImageExporter(plot.getPlotItem()).export(folder_path + filename)
+
+        self.structure_figure.savefig(folder_path + "fullerene_structure.png")
+
     def plot_fullerene_structure(self, atoms, r_avg):
         x, y, z = atoms[:, 0], atoms[:, 1], atoms[:, 2]
         nn_dist = self.nn_scaling * r_avg
 
-        self.structure_figure.clear()
         ax = self.structure_figure.add_subplot(111, projection="3d")
 
         # Plot vertices
