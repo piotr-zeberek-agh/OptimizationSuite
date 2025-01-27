@@ -7,7 +7,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import json
 from portfolio_data import fetch_data
-from annealing import accept_move
+from utilities.annealing import accept_move
 import numpy as np
 import pandas as pd
 import random
@@ -273,19 +273,25 @@ class PortfolioOptimizationScenario(Scenario):
 
         tickers = self.data.columns
 
-        optimal_portfolio, optimal_sharpe = self.simulated_annealing_portfolio(
-            assets=tickers,
-            expected_returns=self.expected_returns.values,
-            covariance_matrix=self.covariance_matrix.values,
-            risk_free_rate=0.02,
-            max_iter=20000,
-            initial_temperature=100,
-            cooling_rate=0.95,
-            max_allocation=0.25,
-            min_allocation=0.0
-        )
-        
-        self.chart_widget.update_chart(optimal_portfolio, tickers, optimal_sharpe)
+        while True:
+            optimal_portfolio, optimal_sharpe = self.simulated_annealing_portfolio(
+                assets=tickers,
+                expected_returns=self.expected_returns.values,
+                covariance_matrix=self.covariance_matrix.values,
+                risk_free_rate=0.02,
+                max_iter=20000,
+                initial_temperature=100,
+                cooling_rate=0.95,
+                max_allocation=0.25,
+                min_allocation=0.0
+            )
+            if optimal_sharpe > 0:
+                break
+
+        tickers_cut = [label for label, value in zip(tickers, optimal_portfolio) if value >= 1e-4]
+        values_cut = [value for value in optimal_portfolio if value >= 1e-4]
+
+        self.chart_widget.update_chart(values_cut, tickers_cut, optimal_sharpe)
         self.portfolio_table.setRowCount(len(self.expected_returns))
         for i, asset in enumerate(self.expected_returns.index): 
             if abs(self.expected_returns[asset]) > 1e-7:
@@ -314,7 +320,7 @@ class PortfolioOptimizationScenario(Scenario):
 
         for _ in range(max_iter):
             new_portfolio = self.make_move(current_portfolio, min_allocation, max_allocation)
-            new_portfolio = self.enforce_constraints(new_portfolio, min_allocation, max_allocation)
+            # new_portfolio = self.enforce_constraints(new_portfolio, min_allocation, max_allocation)
             new_sharpe = self.calculate_sharpe(new_portfolio, expected_returns, covariance_matrix, risk_free_rate)
             if accept_move(current_sharpe, new_sharpe, temperature):
                 current_portfolio = new_portfolio
@@ -344,6 +350,7 @@ class PortfolioOptimizationScenario(Scenario):
         new_weights[random_idx] += change
         new_weights = np.clip(new_weights, min_weight, max_weight) # Clip to [0, 1]
         new_weights /= np.sum(new_weights)
+        return new_weights
     
     def enforce_constraints(self, portfolio, min_allocation, max_allocation):
         """Function to enforce constraints on portfolio weights."""

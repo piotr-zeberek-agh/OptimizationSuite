@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QComboBox, QTableWidget, QPushButton
 from default_scenarios import (gradient_descent, fullerenes_structure, portfolio_optimization)
-from help_portfolio import HelpWindowPortfolio
-from help_fullerenes import HelpWindowFullerenes
-from help_gradient import HelpWindowGradient
-from help_default import HelpWindowDefault
+from gui.help.help_portfolio import HelpWindowPortfolio
+from gui.help.help_fullerenes import HelpWindowFullerenes
+from gui.help.help_gradient import HelpWindowGradient
+from gui.help.help_default import HelpWindowDefault
 
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
@@ -127,19 +127,19 @@ class MainWindow(QMainWindow):
         self.current_scenario = GradientDescentScenario(self)
 
     def toggle_dark_light_mode(self):
-        """Toggle between dark and light mode."""
+        """Toggle the dark/light mode."""
         if self.is_dark_mode:
             self.central_widget.setStyleSheet("background-color: white; color: black;")
             self.dark_light_mode_button.setToolTip("Turn on dark mode")
             self.statusBar().showMessage("Light mode enabled", 2000)
         else:
             self.central_widget.setStyleSheet("background-color: #2f2f2f; color: white;")
-            self.dark_light_mode_button.("Turn on light mode")
+            self.dark_light_mode_button.setToolTip("Turn on light mode")
             self.statusBar().showMessage("Dark mode enabled", 2000)
         self.is_dark_mode = not self.is_dark_mode
 
     def toggle_autosave(self):
-        """Toggle autosave on and off."""
+        """Toggle the autosave feature."""
         if self.autosave_enabled:
             self.autosave_button.setToolTip("Autosave is disabled")
             self.autosave_button.setStyleSheet("border: 2px solid transparent;")
