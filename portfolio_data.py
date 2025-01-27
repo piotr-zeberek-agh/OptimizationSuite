@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 
 def fetch_data(tickers_by_category, start_date, end_date):
+    """ Fetches data for all tickers in the tickers_by_category dictionary """ 
     all_data = []
     for category, tickers in tickers_by_category.items():
         if category == "Stocks":
@@ -24,8 +25,8 @@ def fetch_data(tickers_by_category, start_date, end_date):
     combined_data = pd.concat(all_data, axis=1)
     return combined_data
 
-# Funkcje miają takie same działanie, ale różnią się kategoriami aktywów, 
-# w przypadku zastosowania pojedycznej metody jest błąd
+# Functions for fetching data for different categories of assets
+# In case of using a single method, there is an error
 def fetch_stock_data(tickers, start_date, end_date):
     data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
     return data

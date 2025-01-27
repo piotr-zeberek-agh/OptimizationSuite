@@ -1,20 +1,24 @@
 from abc import ABC, abstractmethod
 
 class Scenario(ABC):
+    """Abstract class for a scenario."""
     def __init__(self, layout):
         self.layout = layout
         self.clear_layout()
     
     @abstractmethod
     def adjust_layout(self):
+        """Adjust the layout of the scenario."""
         pass
     
     @abstractmethod
     def run(self):
+        """Run the scenario."""
         pass
     
     @abstractmethod
     def stop(self):
+        """Stop the scenario."""
         pass
     
     def clear_layout(self):

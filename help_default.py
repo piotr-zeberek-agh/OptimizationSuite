@@ -1,5 +1,4 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTabWidget, QWidget, QSpacerItem, QSizePolicy
-import json
 from PyQt6.QtCore import Qt
 
 class HelpWindowDefault(QDialog):
@@ -16,10 +15,9 @@ class HelpWindowDefault(QDialog):
         container.setLayout(layout)
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
-
         self.add_main_tab()
-
         layout.addWidget(self.tab_widget)
+
         self.setLayout(layout)
 
     def add_main_tab(self):
@@ -29,13 +27,13 @@ class HelpWindowDefault(QDialog):
 
         label_1 = QLabel("Window displaying general information about the program.")
         label_1.setStyleSheet("""
-            font-family: Arial, Helvetica, sans-serif;  /* Czcionka */
-            font-size: 20px;                            /* Wielkość tekstu */
-            font-weight: bold;                          /* Opcjonalnie pogrubienie */
-            text-align: center;                         /* Centrowanie */
-            color: #CCC;                                /* Opcjonalny kolor */
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: #CCC;
         """)
-        label_1.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Wyśrodkowanie poziome i pionowe
+        label_1.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(label_1)
 
         spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)

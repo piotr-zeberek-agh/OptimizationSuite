@@ -50,8 +50,6 @@ class HelpWindowPortfolio(QDialog):
             print(f"An error occurred: {e}")
             return None
 
-    # Zakładki dla różnych kategorii
-
     def add_main_tab(self):
         """Adds the main tab."""
         main_tab = QWidget()
@@ -59,25 +57,25 @@ class HelpWindowPortfolio(QDialog):
 
         label_1 = QLabel("Welcome to the financial portfolio optimization application")
         label_1.setStyleSheet("""
-            font-family: Arial, Helvetica, sans-serif;  /* Czcionka */
-            font-size: 20px;                            /* Wielkość tekstu */
-            font-weight: bold;                          /* Opcjonalnie pogrubienie */
-            text-align: center;                         /* Centrowanie */
-            color: #CCC;                                /* Opcjonalny kolor */
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: #CCC;
         """)
-        label_1.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Wyśrodkowanie poziome i pionowe
+        label_1.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(label_1)
 
         label_2 = QLabel("Here you can check the importance of specific assets.")
         label_2.setStyleSheet("""
-            font-family: Arial, Helvetica, sans-serif;  /* Czcionka */
-            font-size: 20px;                            /* Wielkość tekstu */
-            font-weight: bold;                          /* Opcjonalnie pogrubienie */
-            text-align: center;                         /* Centrowanie */
-            color: #CCC;                                /* Opcjonalny kolor */
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: #CCC;
         """)
 
-        label_2.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Wyśrodkowanie poziome i pionowe
+        label_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(label_2)
 
         spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)

@@ -16,6 +16,7 @@ import pyqtgraph as pg
 
 
 class GradientDescentScenario(Scenario):
+    """ class representing the gradient descent scenario """ 
     def __init__(self, layout):
         super().__init__(layout)
         self.default_init_val = 0
@@ -36,10 +37,9 @@ class GradientDescentScenario(Scenario):
         self.adjust_layout()
 
     def adjust_layout(self):
+        """ adjust the layout of the scenario """
 
-        # left layout
         self.left_layout = QVBoxLayout()
-
         self.var_count_label = QLabel("No. independent variables: ")
 
         self.var_count_spin_box = QSpinBox()
@@ -136,6 +136,7 @@ class GradientDescentScenario(Scenario):
         self.layout.addLayout(self.main_layout)
 
     def set_row_data(self, idx, data=None):
+        """ Set the data for a row in the table """
         if data is None:
             data = [
                 f"x{idx+1}",
@@ -148,12 +149,14 @@ class GradientDescentScenario(Scenario):
             self.var_table.setItem(idx, col, QTableWidgetItem(str(val)))
 
     def update_calculated_values(self):
+        """ Update the calculated values in the table """
         for row, val in enumerate(self.var_values):
             self.var_table.setItem(
                 row, self.var_table.columnCount() - 1, QTableWidgetItem(str(val))
             )
 
     def on_var_count_change(self):
+        """ Handle the change of the number of variables """
         row_count = self.var_table.rowCount()
         spin_box_val = self.var_count_spin_box.value()
 
@@ -166,6 +169,7 @@ class GradientDescentScenario(Scenario):
                 self.var_table.removeRow(self.var_table.rowCount() - 1)
 
     def run(self):
+        """ Run the gradient descent algorithm """
         learning_rate = float(self.learning_rate_field.text())
         max_iter = int(self.max_iter_field.text())
         convergence = float(self.convergence_field.text())
@@ -213,9 +217,11 @@ class GradientDescentScenario(Scenario):
             print(f"Error making steps: {e}")
             
     def stop(self):
+        """ Stop the scenario """
         pass
 
     def retrieve_vars(self):
+        """ Retrieve the variables from the table """
         names, vinit, vmin, vmax = [], [], [], []
 
         try:
@@ -248,6 +254,7 @@ class GradientDescentScenario(Scenario):
         self.var_max_values = np.array(vmax)
 
     def calc_formula_value(self, var_values):
+        """ Calculate the value of the formula """
         try:
             return eval(self.formula_text, dict(zip(self.var_names, var_values)))
         except Exception as e:
@@ -255,6 +262,7 @@ class GradientDescentScenario(Scenario):
         return 0
 
     def calc_gradient(self, var_values, gradient_step=1e-4):
+        """ Calculate the gradient of the formula """
         dim = len(var_values)
         gradient = np.empty(dim, dtype=np.float64)
 
@@ -268,6 +276,7 @@ class GradientDescentScenario(Scenario):
         return gradient / (2.0 * gradient_step)
 
     def make_step(self, learning_rate):
+        """ Make a step in the gradient descent algorithm """
         new_vars = self.var_values - learning_rate * self.calc_gradient(self.var_values)
 
         if np.any(new_vars < self.var_min_values):
@@ -283,6 +292,7 @@ class GradientDescentScenario(Scenario):
 
 
 class GradientDescentChartWidget(QWidget):
+    """ class representing the chart widget for the gradient descent scenario """
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -300,6 +310,7 @@ class GradientDescentChartWidget(QWidget):
         self.setLayout(layout)
 
     def update_chart(self, var_names, var_values, formula_values):
+        """ Update the chart """
         self.var_values_plot.clear()
         for i, var_name in enumerate(var_names):
             self.var_values_plot.plot(

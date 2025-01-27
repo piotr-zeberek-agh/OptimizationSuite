@@ -17,6 +17,7 @@ DEFAULT_SCENARIO_CLASSES = {
 }
 
 class MainWindow(QMainWindow):
+    """Main window of the application."""
     def __init__(self):
         super().__init__()
 
@@ -38,7 +39,6 @@ class MainWindow(QMainWindow):
         self.central_widget.setStyleSheet("background-color: #2f2f2f; color: white;")
 
         self.setCentralWidget(self.central_widget)
-
         self.scenario_choosing_layout = QHBoxLayout()
         
         self.scenario_label = QLabel("Choose scenario")
@@ -50,11 +50,9 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout.setSpacing(5)
 
         self.scenario_combo_box = QComboBox()
-
         self.scenario_combo_box.setFixedWidth(300)
         self.scenario_choosing_layout.addStretch()
         self.scenario_choosing_layout.setAlignment(self.scenario_combo_box, Qt.AlignmentFlag.AlignRight)
-
         self.scenario_combo_box.addItems(self.scenario_classes.keys())
 
         self.help_button = QPushButton()
@@ -65,7 +63,6 @@ class MainWindow(QMainWindow):
         self.help_button.setStyleSheet("border: 2px solid transparent;")
         self.help_button.clicked.connect(self.help_button_clicked)
 
-        # Przycisk trybu jasny/ciemny
         self.dark_light_mode_button = QPushButton()
         self.dark_light_mode_button.setIcon(QIcon("resources/images/mode.png"))
         self.dark_light_mode_button.setIconSize(QSize(32, 32))
@@ -73,7 +70,6 @@ class MainWindow(QMainWindow):
         self.dark_light_mode_button.setFixedSize(40, 40)
         self.dark_light_mode_button.clicked.connect(self.toggle_dark_light_mode)
 
-        # Przycisk autozapisu
         self.autosave_button = QPushButton()
         self.autosave_button.setIcon(QIcon("resources/images/autosave.svg"))
         self.autosave_button.setIconSize(QSize(32, 32))
@@ -90,13 +86,10 @@ class MainWindow(QMainWindow):
         self.is_dark_mode = True
         self.autosave_enabled = True
 
-        ##############################################
         self.scenario_choosing_layout.addWidget(self.scenario_combo_box)
-        
         self.window_layout = QVBoxLayout()
         self.window_layout.addLayout(self.scenario_choosing_layout)
 
-        # modified by scenario
         self.scenario_input_layout = QVBoxLayout()
         self.scenario_input_layout.addWidget(QTableWidget())
         self.window_layout.addLayout(self.scenario_input_layout)
@@ -104,8 +97,8 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.window_layout)
 
     def show_help_window(self):
-        """Pokazuje okno pomocy."""
-        help_me_window = HelpWindow(self)
+        """Show the help window."""
+        help_me_window = HelpWindowDefault(self)
         help_me_window.show_help()
 
     def on_scenario_change(self):
@@ -134,18 +127,19 @@ class MainWindow(QMainWindow):
         self.current_scenario = GradientDescentScenario(self)
 
     def toggle_dark_light_mode(self):
+        """Toggle between dark and light mode."""
         if self.is_dark_mode:
             self.central_widget.setStyleSheet("background-color: white; color: black;")
             self.dark_light_mode_button.setToolTip("Turn on dark mode")
             self.statusBar().showMessage("Light mode enabled", 2000)
         else:
             self.central_widget.setStyleSheet("background-color: #2f2f2f; color: white;")
-            # self.dark_light_mode_button.setIcon(QIcon("resources/images/dark_mode.png"))
-            self.dark_light_mode_button.setToolTip("Turn on light mode")
+            self.dark_light_mode_button.("Turn on light mode")
             self.statusBar().showMessage("Dark mode enabled", 2000)
         self.is_dark_mode = not self.is_dark_mode
 
     def toggle_autosave(self):
+        """Toggle autosave on and off."""
         if self.autosave_enabled:
             self.autosave_button.setToolTip("Autosave is disabled")
             self.autosave_button.setStyleSheet("border: 2px solid transparent;")

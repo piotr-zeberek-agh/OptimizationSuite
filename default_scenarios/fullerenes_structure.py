@@ -21,14 +21,17 @@ from pathlib import Path
 
 
 def calc_r(first, second):
+    """Calculate distance between two points in 3D space."""
     return np.linalg.norm(first - second)
 
 
 def calc_r_idx(i: int, j: int, atoms):
+    """Calculate distance between two atoms in 3D space."""
     return calc_r(atoms[j], atoms[i])
 
 
 def to_cartesian(spherical):
+    """Convert spherical coordinates to cartesian."""
     r, phi, theta = spherical
     x = r * np.sin(theta) * np.cos(phi)
     y = r * np.sin(theta) * np.sin(phi)
@@ -37,6 +40,7 @@ def to_cartesian(spherical):
 
 
 def to_spherical(cartesian):
+    """Convert cartesian coordinates to spherical."""
     x, y, z = cartesian
     r = np.sqrt(x**2 + y**2 + z**2)
     phi = np.arctan2(y, x)
@@ -45,6 +49,7 @@ def to_spherical(cartesian):
 
 
 class BrennerPotential:
+    """Brenner potential for carbon-carbon interactions."""
     def __init__(
         self,
         size,
@@ -86,6 +91,7 @@ class BrennerPotential:
         self.V = np.zeros(size)
 
     def get_V_tot(self, atoms):
+        """Calculate total potential energy of the system."""
         self.fill_r(atoms)
         self.fill_f_VR_VA()
         self.fill_B_avg(atoms)
@@ -93,11 +99,13 @@ class BrennerPotential:
         return 0.5 * np.sum(self.V)
 
     def fill_r(self, atoms):
+        """Fill matrix of distances between atoms."""
         for i in range(self.n):
             for j in range(i + 1, self.n):
                 self.r[i, j] = self.r[j, i] = calc_r_idx(i, j, atoms)
 
     def fill_f_VR_VA(self):
+        """Fill matrices of bond order, repulsive and attractive potentials."""
         for i in range(self.n):
             for j in range(self.n):
                 r_ij = self.r[i, j]
@@ -126,6 +134,7 @@ class BrennerPotential:
                 )
 
     def fill_B_avg(self, atoms):
+        """Fill matrix of average bond order."""
         for i in range(self.n):
             for j in range(i + 1, self.n):
                 r_ij = self.r[i, j]
@@ -186,6 +195,7 @@ class BrennerPotential:
                 )
 
     def fill_V(self):
+        """Fill vector of potential energies."""
         self.V.fill(0)
 
         for i in range(self.n):
@@ -198,6 +208,7 @@ class BrennerPotential:
                 )
 
     def calc_f(self, r_ij):
+        """Calculate bond order function."""
         if r_ij <= self.R1:
             return 1.0
         if r_ij <= self.R2:
@@ -205,6 +216,7 @@ class BrennerPotential:
         return 0.0
 
     def calc_V_R(self, r_ij):
+        """Calculate repulsive potential."""
         return (
             self.De
             / (self.S - 1.0)
@@ -212,6 +224,7 @@ class BrennerPotential:
         )
 
     def calc_V_A(self, r_ij):
+        """Calculate attractive potential."""
         return (
             self.De
             / (self.S - 1.0)
@@ -220,6 +233,7 @@ class BrennerPotential:
         )
 
     def calc_V(self, i, atoms):
+        """Calculate potential energy of a single atom."""
         V = 0.0
         for j in range(self.n):
             r_ij = calc_r(atoms[i], atoms[j])
@@ -231,6 +245,7 @@ class BrennerPotential:
         return V
 
     def calc_B_avg(self, i, j, atoms):
+        """Calculate average bond order between two atoms."""
         r_ij = calc_r(atoms[i], atoms[j])
         if r_ij > self.R2 or i == j:
             return 0.0
@@ -281,6 +296,7 @@ class BrennerPotential:
 
 
 class Fullerene:
+    """Class representing a fullerene structure."""
     def __init__(self, size, r, limit_bonds=True):
         self.n = size
         self.atoms = np.zeros((size, 3))
@@ -291,6 +307,7 @@ class Fullerene:
         self.r_avg = r
 
     def init_atoms(self, r):
+        """Initialize atoms in spherical coordinates."""
         for i in range(self.n):
             self.atoms_spherical[i] = np.array(
                 [r, 2 * np.pi * np.random.uniform(), np.pi * np.random.uniform()]
@@ -298,18 +315,20 @@ class Fullerene:
             self.atoms[i] = to_cartesian(self.atoms_spherical[i])
 
     def calc_r_avg(self):
+        """Calculate average distance between atoms."""
         return np.average(self.atoms_spherical[:, 0])
 
     def restrict_quadruple_bonds(self, xi=10.0):
+        """Restrict quadruple bonds."""
         self.brenner_potential.xi = xi
         self.brenner_potential.limit_bonds = True
 
     def allow_quadruple_bonds(self):
+        """Allow quadruple bonds."""
         self.brenner_potential.limit_bonds = False
 
     def try_shifting(self, beta, w_r, w_phi, w_theta, W_all, use_full_potential=False):
-
-        # Shifting individual atoms
+        """Try shifting individual atoms in the structure."""
         for i in range(self.n):
             atom_old = self.atoms[i].copy()
             atom_old_spherical = self.atoms_spherical[i].copy()
@@ -393,6 +412,7 @@ class Fullerene:
 
 
 class FullereneWorkerThread(QThread):
+    """Worker thread for running the optimization algorithm."""
     progress_signal = pyqtSignal(str, list, list, list, np.ndarray)
     final_message = "Finished."
     stop_message = "Stopped."
@@ -424,6 +444,7 @@ class FullereneWorkerThread(QThread):
         self.running = True
 
     def run(self):
+        """Run the FullereneWorkerThread."""
         beta_history = []
         r_avg_history = []
         v_tot_history = []
@@ -471,10 +492,12 @@ class FullereneWorkerThread(QThread):
             )
 
     def stop(self):
+        """Stop the FullereneWorkerThread."""
         self.running = False
 
 
 class FullerenesStructureScenario(Scenario):
+    """Scenario for optimizing fullerene structure."""
     def __init__(self, layout):
         super().__init__(layout)
         self.default_number_of_atoms = 60
@@ -499,6 +522,7 @@ class FullerenesStructureScenario(Scenario):
         self.adjust_layout()
 
     def adjust_layout(self):
+        """Adjust layout of the scenario."""
 
         # left layout
         self.left_layout = QVBoxLayout()
@@ -583,6 +607,7 @@ class FullerenesStructureScenario(Scenario):
         self.layout.addLayout(self.main_layout)
 
     def add_field_input(self, label, default_value, layout):
+        """Add input field to the layout."""
         field = QLineEdit()
         field.setText(str(default_value))
         field_layout = QHBoxLayout()
@@ -592,6 +617,7 @@ class FullerenesStructureScenario(Scenario):
         return field, field_layout
 
     def run(self):
+        """ Run the optimization algorithm."""
         self.run_button.setEnabled(False)
         self.stop_button.setEnabled(True)
         self.chart.clear()
@@ -635,6 +661,7 @@ class FullerenesStructureScenario(Scenario):
         self.worker_thread.start()
 
     def update_data(self, message, beta_history, r_avg_history, v_tot_history, atoms):
+        """Update data in the scenario."""
         self.output_field.setText(message)
         self.beta_history = beta_history
         self.r_avg_history = r_avg_history
@@ -647,6 +674,7 @@ class FullerenesStructureScenario(Scenario):
             self.stop()
 
     def stop(self):
+        """Stop the optimization algorithm."""
         if self.worker_thread:
             self.worker_thread.stop()
         self.run_button.setEnabled(True)
@@ -654,6 +682,7 @@ class FullerenesStructureScenario(Scenario):
 
 
 class FullerenesStructureChartWidget(QWidget):
+    """ Widget for plotting the results of the optimization algorithm."""
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -684,6 +713,7 @@ class FullerenesStructureChartWidget(QWidget):
         self.setLayout(layout)
 
     def update(self, betas, r_avgs, v_tots, atoms):
+        """Update the plots."""
         for plot, vals in zip(
             self.qt_plots,
             [betas, r_avgs, v_tots],
@@ -694,12 +724,14 @@ class FullerenesStructureChartWidget(QWidget):
         pg.QtCore.QCoreApplication.processEvents()
 
     def clear(self):
+        """Clear the plots."""
         for plot in self.qt_plots:
             plot.clear()
 
         self.structure_figure.clear()
 
     def save(self):
+        """Save the plots."""
         folder_path = "results/fullerenes_structure/"
         Path(folder_path).mkdir(parents=True, exist_ok=True)
 
@@ -711,6 +743,7 @@ class FullerenesStructureChartWidget(QWidget):
         self.structure_figure.savefig(folder_path + "fullerene_structure.png")
 
     def plot_fullerene_structure(self, atoms, r_avg):
+        """Plot the fullerene structure."""
         x, y, z = atoms[:, 0], atoms[:, 1], atoms[:, 2]
         nn_dist = self.nn_scaling * r_avg
 
