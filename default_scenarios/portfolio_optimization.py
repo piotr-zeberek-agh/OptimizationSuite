@@ -21,7 +21,8 @@ class PortfolioOptimizationScenario(Scenario):
         super().__init__(layout)
         self.selected_options = None
         self.data = None
-
+        self.risk_free_rate = 0
+        
         self.adjust_layout()
 
     def adjust_layout(self):
@@ -103,18 +104,18 @@ class PortfolioOptimizationScenario(Scenario):
         self.middle_line.setFrameShadow(QFrame.Shadow.Sunken)
         self.mid_layout.addWidget(self.middle_line)
 
-        tab_button_1 = QPushButton()
-        tab_button_1.setIcon(QIcon(QPixmap("resources/images/tab_1.png")))
-        tab_button_1.clicked.connect(lambda: self.switch_tab(0))
+        # tab_button_1 = QPushButton()
+        # tab_button_1.setIcon(QIcon(QPixmap("resources/images/tab_1.png")))
+        # tab_button_1.clicked.connect(lambda: self.switch_tab(0))
 
-        tab_button_2 = QPushButton()
-        tab_button_2.setIcon(QIcon(QPixmap("resources/images/tab_2.png")))
-        tab_button_2.clicked.connect(lambda: self.switch_tab(1))
+        # tab_button_2 = QPushButton()
+        # tab_button_2.setIcon(QIcon(QPixmap("resources/images/tab_2.png")))
+        # tab_button_2.clicked.connect(lambda: self.switch_tab(1))
 
-        self.tabs_layout = QHBoxLayout()
-        self.tabs_layout.addWidget(tab_button_1)
-        self.tabs_layout.addWidget(tab_button_2)
-        self.left_layout.addLayout(self.tabs_layout)
+        # self.tabs_layout = QHBoxLayout()
+        # self.tabs_layout.addWidget(tab_button_1)
+        # self.tabs_layout.addWidget(tab_button_2)
+        # self.left_layout.addLayout(self.tabs_layout)
 
         self.right_layout = QVBoxLayout()
 
@@ -125,9 +126,11 @@ class PortfolioOptimizationScenario(Scenario):
         self.right_layout.addWidget(self.stacked_widget)
 
         self.portfolio_table = QTableWidget()
-        self.portfolio_table.setRowCount(5)
-        self.portfolio_table.setColumnCount(3)
-        self.portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Allocation", "Expected Return", "Risk", "Beta", "Sharpe Ratio", "Treynor Ratio"])
+        self.portfolio_table.setRowCount(2)
+        self.portfolio_table.setColumnCount(9)
+        self.portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Allocation", "Expected Return", "Correlation", "Risk", "Beta", "Sharpe Ratio", "Treynor Ratio"])
+        self.portfolio_table.resizeColumnsToContents()
+
         self.right_layout.addWidget(self.portfolio_table)
 
         self.main_window.addLayout(self.left_layout)
@@ -274,12 +277,12 @@ class PortfolioOptimizationScenario(Scenario):
         tickers = self.data.columns
 
         while True:
-            optimal_portfolio, optimal_sharpe = self.simulated_annealing_portfolio(
+            optimal_portfolio, optimal_sharpe, asset_details = self.simulated_annealing_portfolio(
                 assets=tickers,
                 expected_returns=self.expected_returns.values,
                 covariance_matrix=self.covariance_matrix.values,
-                risk_free_rate=0.02,
-                max_iter=20000,
+                risk_free_rate=0,
+                max_iter=30000,
                 initial_temperature=100,
                 cooling_rate=0.95,
                 max_allocation=0.25,
@@ -290,17 +293,44 @@ class PortfolioOptimizationScenario(Scenario):
 
         tickers_cut = [label for label, value in zip(tickers, optimal_portfolio) if value >= 1e-4]
         values_cut = [value for value in optimal_portfolio if value >= 1e-4]
-
         self.chart_widget.update_chart(values_cut, tickers_cut, optimal_sharpe)
-        self.portfolio_table.setRowCount(len(self.expected_returns))
-        for i, asset in enumerate(self.expected_returns.index): 
-            if abs(self.expected_returns[asset]) > 1e-7:
-                self.portfolio_table.setItem(i, 0, QTableWidgetItem(asset))
-                expected_return = f"{self.expected_returns[asset]:.6f}"
-                self.portfolio_table.setItem(i, 1, QTableWidgetItem(expected_return))
-                risk_level = self.calculate_risk_level(asset)
-                risk_level_formatted = f"{risk_level:.6f}" if isinstance(risk_level, (float, np.float64)) else str(risk_level)
-                self.portfolio_table.setItem(i, 2, QTableWidgetItem(risk_level_formatted))
+
+        self.portfolio_table.setRowCount(len(asset_details))
+        for i, asset_data in enumerate(asset_details):
+            self.portfolio_table.setItem(i, 0, QTableWidgetItem(asset_data["Asset Name"]))
+            self.portfolio_table.setItem(i, 1, QTableWidgetItem(f"{asset_data['Allocation']:.6f}"))
+            self.portfolio_table.setItem(i, 2, QTableWidgetItem(f"{asset_data['Expected Return']:.6f}"))
+            self.portfolio_table.setItem(i, 3, QTableWidgetItem(f"{asset_data['Correlation']:.6f}"))
+            self.portfolio_table.setItem(i, 4, QTableWidgetItem(f"{asset_data['Risk']:.6f}"))
+            self.portfolio_table.setItem(i, 5, QTableWidgetItem(f"{asset_data['Beta']:.6f}"))
+            self.portfolio_table.setItem(i, 6, QTableWidgetItem(f"{asset_data['Sharpe Ratio']:.6f}"))
+            self.portfolio_table.setItem(i, 7, QTableWidgetItem(f"{asset_data['Treynor Ratio']:.6f}"))
+        self.portfolio_table.resizeColumnsToContents()
+
+    def calculate_beta(self, covariance_matrix, asset_index):
+        """Calculate Beta for an individual asset."""
+        market_variance = np.sum(covariance_matrix) / covariance_matrix.shape[0]  # approximating market variance
+        covariance_with_market = np.sum(covariance_matrix[asset_index])
+        return covariance_with_market / market_variance if market_variance != 0 else 0
+
+    def calculate_sharpe_individual(self, expected_return, risk, risk_free_rate):
+        """Calculate Sharpe Ratio for an individual asset."""
+        return (expected_return - risk_free_rate) / risk if risk != 0 else 0
+
+    def calculate_correlation(self, covariance_matrix, asset_index, portfolio_weights):
+        """Calculate correlation of an asset with the portfolio."""
+        portfolio_variance = np.dot(portfolio_weights, np.dot(covariance_matrix, portfolio_weights))
+        asset_variance = covariance_matrix[asset_index, asset_index]
+        covariance = np.dot(covariance_matrix[asset_index], portfolio_weights)
+        if portfolio_variance == 0 or asset_variance == 0:
+            return 0
+        return covariance / np.sqrt(portfolio_variance * asset_variance)
+
+    def calculate_treynor(self, expected_return, risk_free_rate, beta):
+        """Calculate the Treynor Ratio for a single asset."""
+        if beta == 0:
+            return float('inf')
+        return (expected_return - risk_free_rate) / beta
 
     def stop(self):
         """Function to stop the simulation."""
@@ -309,9 +339,9 @@ class PortfolioOptimizationScenario(Scenario):
     def simulated_annealing_portfolio(self, assets, expected_returns, covariance_matrix, 
             risk_free_rate=0, max_iter=10000, initial_temperature=100, 
             cooling_rate=0.99, max_allocation=0.5, min_allocation=0.0):
-        """Function to optimize a portfolio using simulated annealing."""
+        """Optimize a portfolio using simulated annealing."""
         num_assets = len(assets)
-        current_portfolio = np.random.dirichlet(np.ones(num_assets)) # Random portfolio weights (sum to 1)
+        current_portfolio = np.random.dirichlet(np.ones(num_assets))  # Random portfolio weights (sum to 1)
         current_portfolio = self.enforce_constraints(current_portfolio, min_allocation, max_allocation)
         current_sharpe = self.calculate_sharpe(current_portfolio, expected_returns, covariance_matrix, risk_free_rate)
         best_portfolio = current_portfolio
@@ -320,7 +350,6 @@ class PortfolioOptimizationScenario(Scenario):
 
         for _ in range(max_iter):
             new_portfolio = self.make_move(current_portfolio, min_allocation, max_allocation)
-            # new_portfolio = self.enforce_constraints(new_portfolio, min_allocation, max_allocation)
             new_sharpe = self.calculate_sharpe(new_portfolio, expected_returns, covariance_matrix, risk_free_rate)
             if accept_move(current_sharpe, new_sharpe, temperature):
                 current_portfolio = new_portfolio
@@ -330,7 +359,28 @@ class PortfolioOptimizationScenario(Scenario):
                 best_sharpe = new_sharpe
             temperature *= cooling_rate
 
-        return best_portfolio, best_sharpe
+        asset_details = []
+        for idx, asset in enumerate(assets):
+            allocation = best_portfolio[idx]
+            expected_return = expected_returns[idx]
+            risk = np.sqrt(covariance_matrix[idx, idx])
+            beta = self.calculate_beta(covariance_matrix, idx)
+            sharpe_ratio = self.calculate_sharpe_individual(expected_return, risk, risk_free_rate)
+            treynor_ratio = self.calculate_treynor(expected_return, risk_free_rate, beta)
+            correlation = self.calculate_correlation(covariance_matrix, idx, best_portfolio)
+
+            asset_details.append({
+                "Asset Name": asset,
+                "Allocation": allocation,
+                "Expected Return": expected_return,
+                "Risk": risk,
+                "Beta": beta,
+                "Sharpe Ratio": sharpe_ratio,
+                "Treynor Ratio": treynor_ratio,
+                "Correlation": correlation,
+            })
+
+        return best_portfolio, best_sharpe, asset_details
 
     def calculate_risk_level(self, asset):
         """Calculate the risk level of an asset."""
@@ -402,7 +452,7 @@ class SelectionDialog(QDialog):
         """Function to get selected options from the dialog."""
         selected_options = {}
 
-        for layout_index in range(self.dialog_layout.count() - 1):  # Ostatni element to przyciski
+        for layout_index in range(self.dialog_layout.count() - 1):
             category_layout = self.dialog_layout.itemAt(layout_index).layout()
             if not category_layout:
                 continue
