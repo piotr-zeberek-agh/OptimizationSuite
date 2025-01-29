@@ -1,4 +1,4 @@
-from scenario import Scenario
+from utilities.scenario import Scenario
 from PyQt6.QtWidgets import (
     QTableWidget,
     QSpinBox,

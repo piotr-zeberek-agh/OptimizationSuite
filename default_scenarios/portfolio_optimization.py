@@ -1,4 +1,4 @@
-from scenario import Scenario
+from utilities.scenario import Scenario
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QStackedWidget, QFileDialog, QDialogButtonBox, QTableWidgetItem, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QStackedW
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import json
-from portfolio_data import fetch_data
+from utilities.portfolio_data import fetch_data
 from utilities.annealing import accept_move
 import numpy as np
 import pandas as pd
