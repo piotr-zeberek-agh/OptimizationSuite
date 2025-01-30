@@ -57,6 +57,7 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout.setSpacing(5)
 
         self.scenario_combo_box = QComboBox()
+        self.scenario_combo_box.setPlaceholderText("Select scenario")
         self.scenario_combo_box.setFixedWidth(300)
         self.scenario_choosing_layout.addStretch()
         self.scenario_choosing_layout.setAlignment(self.scenario_combo_box, Qt.AlignmentFlag.AlignRight)
