@@ -10,10 +10,11 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QWidget,
 )
+from PyQt6.QtCore import QTimer
 
 import numpy as np
 import pyqtgraph as pg
-
+from pathlib import Path
 
 class GradientDescentScenario(Scenario):
     """ class representing the gradient descent scenario """ 
@@ -33,8 +34,12 @@ class GradientDescentScenario(Scenario):
         self.var_values = np.array([])
         self.var_min_values = np.array([])
         self.var_max_values = np.array([])
-
+        self.chart = GradientDescentChartWidget()
         self.autosave_enabled = False
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_status)
+        self.timer.start(500)  # 500 ms
 
         self.adjust_layout()
 
@@ -127,7 +132,6 @@ class GradientDescentScenario(Scenario):
 
         # right layout
         self.right_layout = QVBoxLayout()
-        self.chart = GradientDescentChartWidget()
         self.right_layout.addWidget(self.chart)
 
         # main layout
@@ -136,6 +140,11 @@ class GradientDescentScenario(Scenario):
         self.main_layout.addLayout(self.right_layout)
 
         self.layout.addLayout(self.main_layout)
+
+    def update_status(self):
+        """Method to update in loop the status of the autosave button."""
+        if self.autosave_enabled != self.chart.autosave_enabled:
+            self.chart.autosave_enabled = not self.chart.autosave_enabled
 
     def set_row_data(self, idx, data=None):
         """ Set the data for a row in the table """
@@ -298,6 +307,7 @@ class GradientDescentChartWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.autosave_enabled = False
         self.var_values_plot = pg.PlotWidget(title="Variables")
         self.var_values_plot.setLabel("bottom", "Iterations")
         self.var_values_plot.setLabel("left", "Value")
@@ -325,6 +335,20 @@ class GradientDescentChartWidget(QWidget):
         # update the plot
         pg.QtCore.QCoreApplication.processEvents()
 
+    def autosave(self, autosave_enabled):
+        """Set autosave status."""
+        if autosave_enabled:    
+            self.save()
+
     def save(self):
-        """ Save the chart """
-        pass
+        """Save the plots."""
+        folder_path = "results/gradient_descent/"
+        Path(folder_path).mkdir(parents=True, exist_ok=True) 
+
+        var_plot_path = folder_path + "variable_values.png"
+        self.var_values_plot.grab().save(var_plot_path)
+        
+        formula_plot_path = folder_path + "formula_values.png"
+        self.formula_values_plot.grab().save(formula_plot_path)
+
+        print(f"Plots saved in {folder_path}")

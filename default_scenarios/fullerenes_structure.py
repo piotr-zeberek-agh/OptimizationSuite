@@ -520,6 +520,7 @@ class FullerenesStructureScenario(Scenario):
         self.structure = None
 
         self.autosave_enabled = False
+        self.chart = FullerenesStructureChartWidget()
 
         self.adjust_layout()
 
@@ -596,7 +597,6 @@ class FullerenesStructureScenario(Scenario):
 
         # right layout
         self.right_layout = QVBoxLayout()
-        self.chart = FullerenesStructureChartWidget()
         self.right_layout.addWidget(self.chart)
 
         self.save_plots_button.clicked.connect(self.chart.save)
@@ -607,6 +607,11 @@ class FullerenesStructureScenario(Scenario):
         self.main_layout.addLayout(self.right_layout)
 
         self.layout.addLayout(self.main_layout)
+
+    def update_status(self):
+        """Method to update in loop the status of the autosave button."""
+        if self.autosave_enabled != self.chart_widget.autosave_enabled:
+            self.chart_widget.autosave_enabled = not self.chart_widget.autosave_enabled
 
     def add_field_input(self, label, default_value, layout):
         """Add input field to the layout."""
@@ -682,6 +687,8 @@ class FullerenesStructureScenario(Scenario):
         self.run_button.setEnabled(True)
         self.stop_button.setEnabled(False)
 
+        if self.autosave_enabled:
+            self.chart.autosave(self.autosave_enabled)
 
 class FullerenesStructureChartWidget(QWidget):
     """ Widget for plotting the results of the optimization algorithm."""
@@ -731,6 +738,11 @@ class FullerenesStructureChartWidget(QWidget):
             plot.clear()
 
         self.structure_figure.clear()
+
+    def autosave(self, autosave_enabled):
+        """Set autosave status."""
+        if autosave_enabled:
+            self.save()
 
     def save(self):
         """Save the plots."""
