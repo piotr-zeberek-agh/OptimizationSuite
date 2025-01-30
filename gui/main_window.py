@@ -6,7 +6,7 @@ from gui.help.help_gradient import HelpWindowGradient
 from gui.help.help_default import HelpWindowDefault
 
 from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import QSize
 
@@ -25,6 +25,13 @@ class MainWindow(QMainWindow):
         self.scenario_classes = DEFAULT_SCENARIO_CLASSES
         self.imported_scenario_classes = {}
         
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_status)
+        self.timer.start(500) # 500 ms
+
+        self.is_dark_mode = True
+        self.autosave_enabled = True
+
         self.set_base_layout()
         self.scenario_combo_box.setCurrentIndex(-1)
         self.scenario_combo_box.currentTextChanged.connect(self.on_scenario_change) # tracks option changes in the combo box
@@ -71,6 +78,7 @@ class MainWindow(QMainWindow):
         self.dark_light_mode_button.clicked.connect(self.toggle_dark_light_mode)
 
         self.autosave_button = QPushButton()
+        # self.autosave_button.setCheckable(True)
         self.autosave_button.setIcon(QIcon("resources/images/autosave.svg"))
         self.autosave_button.setIconSize(QSize(32, 32))
         self.autosave_button.setToolTip("Autosave jest wyłączony")
@@ -82,9 +90,6 @@ class MainWindow(QMainWindow):
         self.scenario_choosing_layout.addWidget(self.help_button)
         self.scenario_choosing_layout.addWidget(self.dark_light_mode_button)
         self.scenario_choosing_layout.addWidget(self.autosave_button)
-        
-        self.is_dark_mode = True
-        self.autosave_enabled = True
 
         self.scenario_choosing_layout.addWidget(self.scenario_combo_box)
         self.window_layout = QVBoxLayout()
@@ -101,6 +106,11 @@ class MainWindow(QMainWindow):
         help_me_window = HelpWindowDefault(self)
         help_me_window.show_help()
 
+    def update_status(self):
+        """Method to update in loop the status of the autosave button."""
+        if self.current_scenario != None and self.autosave_enabled != self.current_scenario.autosave_enabled:
+            self.current_scenario.autosave_enabled = not self.current_scenario.autosave_enabled
+
     def on_scenario_change(self):
         """Handle the scenario selection event."""
         if self.current_scenario is not None:
@@ -109,7 +119,6 @@ class MainWindow(QMainWindow):
         scenario_name = self.scenario_combo_box.currentText()
         self.scenario_label.setText(scenario_name)
         self.current_scenario = self.scenario_classes[scenario_name](self.scenario_input_layout)
-
 
     def setup_fullerenes(self):
         """Set up the Structure Of Fullerenes scenario."""

@@ -35,6 +35,10 @@ class GradientDescentScenario(Scenario):
         self.var_max_values = np.array([])
 
         self.adjust_layout()
+        
+    def autosave(self, autosave_enabled):
+        """ Enable or disable the autosave feature """
+        pass
 
     def adjust_layout(self):
         """ adjust the layout of the scenario """
@@ -322,3 +326,7 @@ class GradientDescentChartWidget(QWidget):
 
         # update the plot
         pg.QtCore.QCoreApplication.processEvents()
+
+    def save(self):
+        """ Save the chart """
+        pass

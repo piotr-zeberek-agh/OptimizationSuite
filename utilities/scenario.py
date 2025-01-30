@@ -10,7 +10,7 @@ class Scenario(ABC):
     def adjust_layout(self):
         """Adjust the layout of the scenario."""
         pass
-    
+
     @abstractmethod
     def run(self):
         """Run the scenario."""
@@ -20,7 +20,7 @@ class Scenario(ABC):
     def stop(self):
         """Stop the scenario."""
         pass
-    
+
     def clear_layout(self):
         """Clear all widgets and layouts in the current layout."""
         for i in reversed(range(self.layout.count())):

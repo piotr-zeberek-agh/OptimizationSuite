@@ -14,6 +14,7 @@ import random
 import re
 import os
 from PyQt6.QtGui import QPixmap, QIcon
+from pathlib import Path
 
 class PortfolioOptimizationScenario(Scenario):
     """Scenario for portfolio optimization."""
@@ -22,9 +23,11 @@ class PortfolioOptimizationScenario(Scenario):
         self.selected_options = None
         self.data = None
         self.risk_free_rate = 0
-        
-        self.adjust_layout()
+        self.autosave_enabled = True
+        self.run_button_clicked = False
 
+        self.adjust_layout()
+            
     def adjust_layout(self):
         """Adjusts the layout to include elements for portfolio optimization."""
 
@@ -50,14 +53,14 @@ class PortfolioOptimizationScenario(Scenario):
         self.date_row.addWidget(self.end_date_line)
         self.end_date_line.textChanged.connect(self.check_date_input)
 
-        self.open_dialog_button = QPushButton("Choose Assets")
+        self.open_dialog_button = QPushButton("Choose assets")
         self.open_dialog_button.clicked.connect(self.open_selection_window)
         self.date_row.addWidget(self.open_dialog_button)
 
         self.left_layout.addLayout(self.date_row)
 
         self.download_data_button = QPushButton()
-        self.download_data_button.setText("Download Data")
+        self.download_data_button.setText("Download data")
         self.download_data_button.setEnabled(False)
         self.download_data_button.clicked.connect(self.download_data)
         self.left_layout.addWidget(self.download_data_button)
@@ -68,7 +71,7 @@ class PortfolioOptimizationScenario(Scenario):
         self.download_layout.addWidget(self.filename_line)
         self.filename_line.textChanged.connect(self.check_filename_input)
         self.save_data_button = QPushButton()
-        self.save_data_button.setText("Save Data")
+        self.save_data_button.setText("Save data")
         self.save_data_button.setEnabled(False)
         self.save_data_button.clicked.connect(self.save_data)
         self.download_layout.addWidget(self.save_data_button)
@@ -83,15 +86,25 @@ class PortfolioOptimizationScenario(Scenario):
         self.left_layout.addWidget(self.selected_table)
 
         self.assets_buttons_layout = QHBoxLayout()
+        self.chart_widget = PortfolioChartWidget()
 
-        self.open_dialog_button = QPushButton("Load Data")
+        self.open_dialog_button = QPushButton("Load data")
         self.open_dialog_button.clicked.connect(self.load_data)
-        self.left_layout.addWidget(self.open_dialog_button)
-
-        self.clear_data_button = QPushButton("Clear Assets")
+        self.assets_buttons_layout.addWidget(self.open_dialog_button)
+        self.clear_data_button = QPushButton("Clear data")
         self.clear_data_button.clicked.connect(self.clear_data)
         self.assets_buttons_layout.addWidget(self.clear_data_button)
         self.left_layout.addLayout(self.assets_buttons_layout)
+
+        self.save_chart_layout = QHBoxLayout()
+        self.chart_name = QLineEdit()
+        self.chart_name.setPlaceholderText("Enter chart name")
+        self.save_chart_layout.addWidget(self.chart_name)
+        self.chart_name.textChanged.connect(self.check_filename_input)
+        self.save_chart_button = QPushButton("Save chart")
+        self.save_chart_button.clicked.connect(self.chart_widget.save)
+        self.save_chart_layout.addWidget(self.save_chart_button)
+        self.left_layout.addLayout(self.save_chart_layout)
 
         self.run_button = QPushButton("Run")
         self.run_button.setEnabled(False)
@@ -104,30 +117,12 @@ class PortfolioOptimizationScenario(Scenario):
         self.middle_line.setFrameShadow(QFrame.Shadow.Sunken)
         self.mid_layout.addWidget(self.middle_line)
 
-        # tab_button_1 = QPushButton()
-        # tab_button_1.setIcon(QIcon(QPixmap("resources/images/tab_1.png")))
-        # tab_button_1.clicked.connect(lambda: self.switch_tab(0))
-
-        # tab_button_2 = QPushButton()
-        # tab_button_2.setIcon(QIcon(QPixmap("resources/images/tab_2.png")))
-        # tab_button_2.clicked.connect(lambda: self.switch_tab(1))
-
-        # self.tabs_layout = QHBoxLayout()
-        # self.tabs_layout.addWidget(tab_button_1)
-        # self.tabs_layout.addWidget(tab_button_2)
-        # self.left_layout.addLayout(self.tabs_layout)
-
         self.right_layout = QVBoxLayout()
-
-        self.stacked_widget = QStackedWidget()
-        self.chart_widget = PortfolioChartWidget()
-        self.stacked_widget.addWidget(self.chart_widget)
-
-        self.right_layout.addWidget(self.stacked_widget)
+        self.right_layout.addWidget(self.chart_widget)
 
         self.portfolio_table = QTableWidget()
-        self.portfolio_table.setRowCount(2)
-        self.portfolio_table.setColumnCount(9)
+        self.portfolio_table.setRowCount(0)
+        self.portfolio_table.setColumnCount(8)
         self.portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Allocation", "Expected Return", "Correlation", "Risk", "Beta", "Sharpe Ratio", "Treynor Ratio"])
         self.portfolio_table.resizeColumnsToContents()
 
@@ -194,27 +189,39 @@ class PortfolioOptimizationScenario(Scenario):
 
     def save_data(self):
         """Function to save the data to a CSV file."""
-        filename="data/" + self.filename_line.text()
+        folder_path = "data/portfolio_optimization/"
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
+
+        filename = self.filename_line.text()
         if not filename.endswith('.csv'):
             filename += '.csv'
-        self.data.to_csv(filename)
+        self.data.to_csv(folder_path+filename)
+        print(f"Chart saved to file: {folder_path + filename}")
 
     def clear_data(self):
         """Function to clear the data and reset the UI."""
         self.selected_table.setColumnCount(0)
         self.selected_table.setRowCount(0)
         self.selected_table.clear()
+        self.portfolio_table.setRowCount(0)
+        self.portfolio_table.clear()
+        self.portfolio_table.setHorizontalHeaderLabels(["Asset Name", "Allocation", "Expected Return", "Correlation", "Risk", "Beta", "Sharpe Ratio", "Treynor Ratio"])
+        self.portfolio_table.resizeColumnsToContents()
         self.download_data_button.setEnabled(False)
         self.save_data_button.setEnabled(False) 
+        self.run_button.setEnabled(False)
         self.selected_options = None
         self.data = None
         self.chart_widget.clear_chart()
+        self.run_button_clicked = False
 
     def load_data(self):
         """Function to load data from a CSV file."""
+        folder_path = "data/portfolio_optimization/"
+        Path(folder_path).mkdir(parents=True, exist_ok=True)
         try:
             file_name, _ = QFileDialog.getOpenFileName(
-                None, "Select CSV File", "data/", "CSV Files (*.csv);;All Files (*)"
+                None, "Select CSV File", folder_path, "CSV Files (*.csv);;All Files (*)"
             )
             if not file_name:
                 print("No file selected!")
@@ -235,9 +242,10 @@ class PortfolioOptimizationScenario(Scenario):
 
             for row in range(len(self.data)):
                 for col in range(len(self.data.columns)):
-                    item = QTableWidgetItem(str(self.data.iloc[row, col]))
+                    # item = QTableWidgetItem(str(self.data.iloc[row, col]))
+                    item = QTableWidgetItem(f"{self.data.iloc[row, col]:.2f}")
                     self.selected_table.setItem(row, col, item)
-
+            self.selected_table.resizeColumnsToContents()
             print(f"Data successfully loaded from {file_name}!")
 
         except Exception as e:
@@ -268,8 +276,9 @@ class PortfolioOptimizationScenario(Scenario):
 
     def run(self):
         """Simulates portfolio optimization and updates the chart."""
-        self.num_days = len(self.data)
+        self.run_button_clicked = True
 
+        self.num_days = len(self.data)
         self.returns = self.data.pct_change(fill_method=None).dropna()
         self.expected_returns = self.returns.mean() * self.num_days
         self.covariance_matrix = self.returns.cov() * self.num_days
@@ -306,6 +315,9 @@ class PortfolioOptimizationScenario(Scenario):
             self.portfolio_table.setItem(i, 6, QTableWidgetItem(f"{asset_data['Sharpe Ratio']:.6f}"))
             self.portfolio_table.setItem(i, 7, QTableWidgetItem(f"{asset_data['Treynor Ratio']:.6f}"))
         self.portfolio_table.resizeColumnsToContents()
+
+        if self.autosave_enabled:
+            self.chart_widget.save()
 
     def calculate_beta(self, covariance_matrix, asset_index):
         """Calculate Beta for an individual asset."""
@@ -500,6 +512,7 @@ class PortfolioChartWidget(QWidget):
         layout.addWidget(self.canvas)
         self.setLayout(layout)
         self.clear_chart()
+        self.autosave_enabled = True
 
     def update_chart(self, weights, tickers, sharpe_ratio):
         """Updates the pie chart with new data."""
@@ -521,15 +534,20 @@ class PortfolioChartWidget(QWidget):
         )
         self.canvas.draw()
 
-    def save_chart(self, file_path="wallet\ results/chart.png"):
-        """Saves the chart to a file."""
-        if file_path is None:
-            file_path = os.path.join("wallet results", "chart.png")
-
-            os.makedirs(os.path.dirname(file_path), exist_ok=True) # Create directory if it doesn't exist
-
-            self.figure.savefig(file_path)
-            print(f"Chart saved to file: {file_path}")
+    def save(self):
+        """Save the chart"""
+        folder_path = "results/portfolio_optimization/"
+        Path(folder_path).mkdir(parents=True, exist_ok=True)     # Create directory if it doesn't exist
+        # os.makedirs(os.path.dirname(file_path), exist_ok=True) # Create directory if it doesn't exist
+        # file_path, _ = QFileDialog.getSaveFileName( None, "Save Chart", folder_path, "PNG Files (*.png);;All Files (*)") # Ask user for file path
+        if self.autosave_enabled:
+            self.figure.savefig(folder_path + "wallet.png") # Save chart to file
+            print(f"Chart saved to file: {folder_path + 'wallet.png'}")
+        else:
+            file_path, _ = QFileDialog.getSaveFileName( None, "Save Chart", folder_path, "PNG Files (*.png);;All Files (*)") # Ask user for file path
+            if file_path:
+                self.figure.savefig(file_path) # Save chart to file
+                print(f"Chart saved to file: {file_path}") 
 
     def clear_chart(self):
         """Clears the chart."""
