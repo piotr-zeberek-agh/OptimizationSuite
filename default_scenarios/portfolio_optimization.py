@@ -1,7 +1,7 @@
 from utilities.scenario import Scenario
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QStackedWidget, QFileDialog, QDialogButtonBox, QTableWidgetItem, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QGridLayout, QStackedWidget, QFileDialog, QDialogButtonBox, QTableWidgetItem, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -29,7 +29,8 @@ class PortfolioOptimizationScenario(Scenario):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_status)
-        self.timer.start(500) # 500 ms
+        self.timer.timeout.connect(self.handle_data)
+        self.timer.start(500)  # 500 ms
 
         self.adjust_layout()
             
@@ -104,6 +105,35 @@ class PortfolioOptimizationScenario(Scenario):
         self.save_chart_button.clicked.connect(self.chart_widget.save)
         self.left_layout.addWidget(self.save_chart_button)
 
+        self.risk_free_rate_input = QLineEdit()
+        self.max_iter_input = QLineEdit()
+        self.initial_temperature_input = QLineEdit()
+        self.cooling_rate_input = QLineEdit()
+        self.max_allocation_input = QLineEdit()
+        self.min_allocation_input = QLineEdit()
+        
+        self.risk_free_rate_input.setText("0")
+        self.max_iter_input.setText("30000")
+        self.initial_temperature_input.setText("100")
+        self.cooling_rate_input.setText("0.95")
+        self.max_allocation_input.setText("0.25")
+        self.min_allocation_input.setText("0.0")
+            
+        layout = QGridLayout()
+        layout.addWidget(QLabel("Risk-Free Rate:"), 0, 0)
+        layout.addWidget(self.risk_free_rate_input, 0, 1)
+        layout.addWidget(QLabel("Max Iterations:"), 1, 0)
+        layout.addWidget(self.max_iter_input, 1, 1)
+        layout.addWidget(QLabel("Initial Temperature:"), 2, 0)
+        layout.addWidget(self.initial_temperature_input, 2, 1)
+        layout.addWidget(QLabel("Cooling Rate:"), 0, 2)
+        layout.addWidget(self.cooling_rate_input, 0, 3)
+        layout.addWidget(QLabel("Max Allocation:"), 1, 2)
+        layout.addWidget(self.max_allocation_input, 1, 3)
+        layout.addWidget(QLabel("Min Allocation:"), 2, 2)
+        layout.addWidget(self.min_allocation_input, 2, 3)
+        self.left_layout.addLayout(layout)
+
         self.run_button = QPushButton("Run")
         self.run_button.setEnabled(False)
         self.run_button.clicked.connect(self.run)
@@ -140,6 +170,18 @@ class PortfolioOptimizationScenario(Scenario):
         """Method to update in loop the status of the autosave button."""
         if self.autosave_enabled != self.chart_widget.autosave_enabled:
             self.chart_widget.autosave_enabled = not self.chart_widget.autosave_enabled
+
+    def handle_data(self):
+        """Method to handle the data input."""
+        try:
+            self.risk_free_rate = float(self.risk_free_rate_input.text())
+            self.max_iter = int(self.max_iter_input.text())
+            self.initial_temperature = float(self.initial_temperature_input.text())
+            self.cooling_rate = float(self.cooling_rate_input.text())
+            self.max_allocation = float(self.max_allocation_input.text())
+            self.min_allocation = float(self.min_allocation_input.text())
+        except ValueError as e:
+            print(f"Error: Please enter valid numbers. {e}")
 
     def check_date_input(self):
         """ Function to check if the date input is correct."""
@@ -334,12 +376,12 @@ class PortfolioOptimizationScenario(Scenario):
                 assets=tickers,
                 expected_returns=self.expected_returns.values,
                 covariance_matrix=self.covariance_matrix.values,
-                risk_free_rate=0,
-                max_iter=30000,
-                initial_temperature=100,
-                cooling_rate=0.95,
-                max_allocation=0.25,
-                min_allocation=0.0
+                risk_free_rate=self.risk_free_rate,
+                max_iter=self.max_iter,
+                initial_temperature=self.initial_temperature,
+                cooling_rate=self.cooling_rate,
+                max_allocation=self.max_allocation,
+                min_allocation=self.min_allocation
             )
             if optimal_sharpe > 0:
                 break
