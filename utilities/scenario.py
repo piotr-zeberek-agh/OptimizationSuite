@@ -5,6 +5,7 @@ class Scenario(ABC):
     def __init__(self, layout):
         self.layout = layout
         self.clear_layout()
+        self.autosave_enabled = False
     
     @abstractmethod
     def adjust_layout(self):

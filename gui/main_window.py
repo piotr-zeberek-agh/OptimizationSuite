@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
         # self.autosave_button.setCheckable(True)
         self.autosave_button.setIcon(QIcon("resources/images/autosave.svg"))
         self.autosave_button.setIconSize(QSize(32, 32))
-        self.autosave_button.setToolTip("Autosave jest wyłączony")
+        self.autosave_button.setToolTip("Autosave turned on")
         self.autosave_button.setFixedSize(40, 40)
         self.autosave_button.setStyleSheet("border: 2px solid transparent;")
         self.autosave_button.clicked.connect(self.toggle_autosave)

@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QThread, pyqtSignal
 
 import numpy as np
 import pyqtgraph as pg
@@ -308,11 +308,11 @@ class Fullerene:
 
     def init_atoms(self, r):
         """Initialize atoms in spherical coordinates."""
-        for i in range(self.n):
-            self.atoms_spherical[i] = np.array(
-                [r, 2 * np.pi * np.random.uniform(), np.pi * np.random.uniform()]
-            )
-            self.atoms[i] = to_cartesian(self.atoms_spherical[i])
+        self.atoms_spherical[:, 0] = r
+        self.atoms_spherical[:, 1] =  np.random.uniform(0,2*np.pi, self.n)
+        self.atoms_spherical[:, 2] = np.random.uniform(0,np.pi, self.n)
+
+        self.atoms = np.array([to_cartesian(atom) for atom in self.atoms_spherical])
 
     def calc_r_avg(self):
         """Calculate average distance between atoms."""
@@ -519,7 +519,6 @@ class FullerenesStructureScenario(Scenario):
         self.v_tot_history = []
         self.structure = None
 
-        self.autosave_enabled = False
         self.chart = FullerenesStructureChartWidget()
 
         self.adjust_layout()
@@ -608,11 +607,6 @@ class FullerenesStructureScenario(Scenario):
 
         self.layout.addLayout(self.main_layout)
 
-    def update_status(self):
-        """Method to update in loop the status of the autosave button."""
-        if self.autosave_enabled != self.chart_widget.autosave_enabled:
-            self.chart_widget.autosave_enabled = not self.chart_widget.autosave_enabled
-
     def add_field_input(self, label, default_value, layout):
         """Add input field to the layout."""
         field = QLineEdit()
@@ -688,7 +682,7 @@ class FullerenesStructureScenario(Scenario):
         self.stop_button.setEnabled(False)
 
         if self.autosave_enabled:
-            self.chart.autosave(self.autosave_enabled)
+            self.chart.save()
 
 class FullerenesStructureChartWidget(QWidget):
     """ Widget for plotting the results of the optimization algorithm."""
@@ -711,7 +705,11 @@ class FullerenesStructureChartWidget(QWidget):
 
         self.nn_scaling = 0.5
         self.structure_figure = Figure()
+        
+        self.structure_axis = self.structure_figure.add_subplot(111, projection="3d")
+        self.structure_axis.set_box_aspect([1, 1, 1])
         self.structure_canvas = FigureCanvas(self.structure_figure)
+        
 
         layout = QGridLayout()
         layout.addWidget(self.beta_plot, 0, 0)
@@ -719,10 +717,14 @@ class FullerenesStructureChartWidget(QWidget):
         layout.addWidget(self.v_tot_plot, 1, 0)
         layout.addWidget(self.structure_canvas, 1, 1)
 
+        self.clear()
         self.setLayout(layout)
 
     def update(self, betas, r_avgs, v_tots, atoms):
         """Update the plots."""
+        
+        self.clear()
+        
         for plot, vals in zip(
             self.qt_plots,
             [betas, r_avgs, v_tots],
@@ -737,12 +739,11 @@ class FullerenesStructureChartWidget(QWidget):
         for plot in self.qt_plots:
             plot.clear()
 
-        self.structure_figure.clear()
-
-    def autosave(self, autosave_enabled):
-        """Set autosave status."""
-        if autosave_enabled:
-            self.save()
+        self.structure_axis.clear()
+        self.structure_axis.set_title("Fullerene structure")
+        self.structure_axis.set_xlabel("x")
+        self.structure_axis.set_ylabel("y")
+        self.structure_axis.set_zlabel("z")
 
     def save(self):
         """Save the plots."""
@@ -761,10 +762,7 @@ class FullerenesStructureChartWidget(QWidget):
         x, y, z = atoms[:, 0], atoms[:, 1], atoms[:, 2]
         nn_dist = self.nn_scaling * r_avg
 
-        ax = self.structure_figure.add_subplot(111, projection="3d")
-
-        # Plot vertices
-        ax.scatter(x, y, z, c="r", marker="o")
+        self.structure_axis.scatter(x, y, z, c="r", marker="o")
 
         # Plot edges
         for i in range(len(x)):
@@ -773,19 +771,12 @@ class FullerenesStructureChartWidget(QWidget):
                     (x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2 + (z[i] - z[j]) ** 2
                 )
                 if dist <= nn_dist:
-                    ax.plot([x[i], x[j]], [y[i], y[j]], [z[i], z[j]], c="b")
+                     self.structure_axis.plot([x[i], x[j]], [y[i], y[j]], [z[i], z[j]], c="b")
 
         # adjust view
         max_range = np.ceil(np.max(atoms))
-        ax.set_xlim([-max_range, max_range])
-        ax.set_ylim([-max_range, max_range])
-        ax.set_zlim([-max_range, max_range])
-
-        ax.set_box_aspect([1, 1, 1])
-
-        ax.set_title("Fullerene structure")
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
-        ax.set_zlabel("z")
+        self.structure_axis.set_xlim([-max_range, max_range])
+        self.structure_axis.set_ylim([-max_range, max_range])
+        self.structure_axis.set_zlim([-max_range, max_range])
 
         self.structure_canvas.draw()
