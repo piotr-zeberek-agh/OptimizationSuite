@@ -34,11 +34,9 @@ class GradientDescentScenario(Scenario):
         self.var_min_values = np.array([])
         self.var_max_values = np.array([])
 
+        self.autosave_enabled = False
+
         self.adjust_layout()
-        
-    def autosave(self, autosave_enabled):
-        """ Enable or disable the autosave feature """
-        pass
 
     def adjust_layout(self):
         """ adjust the layout of the scenario """

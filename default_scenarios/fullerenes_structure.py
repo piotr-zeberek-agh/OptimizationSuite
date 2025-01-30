@@ -519,11 +519,9 @@ class FullerenesStructureScenario(Scenario):
         self.v_tot_history = []
         self.structure = None
 
-        self.adjust_layout()
+        self.autosave_enabled = False
 
-    def autosave(self, autosave_enabled):
-        """Enable or disable the autosave feature."""
-        pass
+        self.adjust_layout()
 
     def adjust_layout(self):
         """Adjust layout of the scenario."""

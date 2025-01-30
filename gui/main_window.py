@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         """Sets up the base layout with scenario label and combo box and combo box."""
 
         self.setWindowTitle("Optimization Suite")
-        self.setGeometry(100, 100, 1200, 800)
+        self.setGeometry(100, 100, 1280, 900)
 
         self.central_widget = QWidget()
         self.central_widget.setStyleSheet("background-color: #2f2f2f; color: white;")

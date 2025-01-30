@@ -1,5 +1,5 @@
 from utilities.scenario import Scenario
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QVBoxLayout, QDialog, QListWidget, QLabel, QStackedWidget, QFileDialog, QDialogButtonBox, QTableWidgetItem, QFrame, QLineEdit, QTableWidget, QPushButton, QHBoxLayout, QWidget
 
@@ -23,8 +23,13 @@ class PortfolioOptimizationScenario(Scenario):
         self.selected_options = None
         self.data = None
         self.risk_free_rate = 0
-        self.autosave_enabled = True
+        self.autosave_enabled = False
         self.run_button_clicked = False
+        self.chart_widget = PortfolioChartWidget()
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_status)
+        self.timer.start(500) # 500 ms
 
         self.adjust_layout()
             
@@ -86,7 +91,6 @@ class PortfolioOptimizationScenario(Scenario):
         self.left_layout.addWidget(self.selected_table)
 
         self.assets_buttons_layout = QHBoxLayout()
-        self.chart_widget = PortfolioChartWidget()
 
         self.open_dialog_button = QPushButton("Load data")
         self.open_dialog_button.clicked.connect(self.load_data)
@@ -96,15 +100,9 @@ class PortfolioOptimizationScenario(Scenario):
         self.assets_buttons_layout.addWidget(self.clear_data_button)
         self.left_layout.addLayout(self.assets_buttons_layout)
 
-        self.save_chart_layout = QHBoxLayout()
-        self.chart_name = QLineEdit()
-        self.chart_name.setPlaceholderText("Enter chart name")
-        self.save_chart_layout.addWidget(self.chart_name)
-        self.chart_name.textChanged.connect(self.check_filename_input)
         self.save_chart_button = QPushButton("Save chart")
         self.save_chart_button.clicked.connect(self.chart_widget.save)
-        self.save_chart_layout.addWidget(self.save_chart_button)
-        self.left_layout.addLayout(self.save_chart_layout)
+        self.left_layout.addWidget(self.save_chart_button)
 
         self.run_button = QPushButton("Run")
         self.run_button.setEnabled(False)
@@ -128,10 +126,20 @@ class PortfolioOptimizationScenario(Scenario):
 
         self.right_layout.addWidget(self.portfolio_table)
 
-        self.main_window.addLayout(self.left_layout)
+        self.container_widget = QWidget()
+        self.container_widget.setLayout(self.left_layout)
+        self.container_widget.setFixedWidth(530)
+        self.main_window.addWidget(self.container_widget)
+        # self.main_window.addLayout(self.left_layout)
+
         self.main_window.addLayout(self.mid_layout)
         self.main_window.addLayout(self.right_layout, stretch=1)
         self.layout.addLayout(self.main_window)
+
+    def update_status(self):
+        """Method to update in loop the status of the autosave button."""
+        if self.autosave_enabled != self.chart_widget.autosave_enabled:
+            self.chart_widget.autosave_enabled = not self.chart_widget.autosave_enabled
 
     def check_date_input(self):
         """ Function to check if the date input is correct."""
@@ -149,12 +157,68 @@ class PortfolioOptimizationScenario(Scenario):
         else:
             self.download_data_button.setEnabled(False)
 
+    def open_selection_window(self):
+        """Function to open a dialog for selecting assets"""
+        try:
+            dialog = SelectionDialog()
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                self.selected_options = dialog.get_selected_options()
+
+                if self.selected_options:
+                    column_headers = []
+                    for category, selected_assets in self.selected_options.items():
+                        column_headers.extend(selected_assets)
+
+                    self.selected_table.setColumnCount(len(column_headers))
+                    self.selected_table.setHorizontalHeaderLabels(column_headers)
+                    self.selected_table.setRowCount(0)
+
+                    for i, asset in enumerate(column_headers):
+                        q_item = QTableWidgetItem(asset)
+                        q_item.setFlags(q_item.flags() & ~Qt.ItemFlag.ItemIsEditable) 
+                        self.selected_table.setItem(0, i, q_item)
+                    self.selected_table.resizeColumnsToContents()
+                    self.check_date_input()
+        except Exception as e:
+            print(f"Error opening selection window: {e}")
+
     def download_data(self):
         """Function to download data from the API."""
-        start_date = self.start_date_line.text()
-        end_date = self.end_date_line.text()
-        self.data = fetch_data(self.selected_options, start_date, end_date)
-        self.run_button.setEnabled(True)
+        try:
+            start_date = self.start_date_line.text()
+            end_date = self.end_date_line.text()
+            self.data = fetch_data(self.selected_options, start_date, end_date)
+            self.run_button.setEnabled(True)
+
+            if self.data is None:
+                print("Error: No data returned from API!")
+                return
+
+            date_column = self.data.index
+            row_count = len(date_column)
+            self.selected_table.setRowCount(row_count)
+
+            column_headers = []
+            for category, selected_assets in self.selected_options.items():
+                for asset in selected_assets:
+                    column_headers.append(asset)
+
+            self.selected_table.setColumnCount(len(column_headers))
+            self.selected_table.setHorizontalHeaderLabels(column_headers)
+
+            for i, category in enumerate(self.selected_options.keys()):
+                for j, asset in enumerate(self.selected_options[category]):
+                    column_index = column_headers.index(asset)
+
+                    for day_index, date in enumerate(date_column):
+                        data_value = self.data.loc[date, asset] if asset in self.data.columns else None
+                        q_item = QTableWidgetItem(f"{data_value:.2f}" if data_value is not None else "")
+                        q_item.setFlags(q_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # Block editing
+                        self.selected_table.setItem(day_index, column_index, q_item)
+
+            self.selected_table.resizeColumnsToContents()
+        except Exception as e:
+            print(f"Error downloading data: {e}")
 
     def switch_tab(self, index):
         """Function to switch between tabs in the stacked widget."""
@@ -214,7 +278,7 @@ class PortfolioOptimizationScenario(Scenario):
         self.data = None
         self.chart_widget.clear_chart()
         self.run_button_clicked = False
-
+# q_item.setFlags(q_item.flags() & ~Qt.ItemFlag.ItemIsEditable)   # block editing
     def load_data(self):
         """Function to load data from a CSV file."""
         folder_path = "data/portfolio_optimization/"
@@ -253,26 +317,6 @@ class PortfolioOptimizationScenario(Scenario):
 
         if self.data is not None:
             self.run_button.setEnabled(True)
-
-    def open_selection_window(self):
-        """Function to open a dialog for selecting assets"""
-        try:
-            dialog = SelectionDialog()
-            if dialog.exec() == QDialog.DialogCode.Accepted:
-                self.selected_options = dialog.get_selected_options()
-                self.selected_table.setColumnCount(len(self.selected_options.keys()))
-                self.selected_table.setHorizontalHeaderLabels(self.selected_options.keys())
-                self.selected_table.setRowCount(max([len(v) for v in self.selected_options.values()]))
-                for i, category in enumerate(self.selected_options.keys()):
-                    for j, item in enumerate(self.selected_options[category]):
-                        q_item = QTableWidgetItem(item)
-                        q_item.setFlags(q_item.flags() & ~Qt.ItemFlag.ItemIsEditable)   # block editing
-                        self.selected_table.setItem(j, i, q_item) 
-                if self.selected_options:
-                    self.check_date_input()
-                    
-        except Exception as e:
-            print(f"Error opening selection window: {e}")
 
     def run(self):
         """Simulates portfolio optimization and updates the chart."""
