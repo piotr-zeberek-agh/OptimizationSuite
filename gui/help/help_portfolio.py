@@ -18,6 +18,8 @@ class HelpWindowPortfolio(QDialog):
         layout.addWidget(self.tab_widget)
 
         self.stocks_help = self.load_help_data("config/help/stocks.json")
+
+        self.asset_descriptions = self.load_help_data("config/help/asset_descriptions.json")
         self.bonds_help = self.load_help_data("config/help/bonds.json")
         self.commodities_help = self.load_help_data("config/help/commodities.json")
         self.etfs_help = self.load_help_data("config/help/etfs.json")
@@ -55,19 +57,19 @@ class HelpWindowPortfolio(QDialog):
         main_tab = QWidget()
         main_layout = QVBoxLayout()
 
-        label_1 = QLabel("Welcome to the financial portfolio optimization application")
-        label_1.setStyleSheet("""
+        label_01 = QLabel("Welcome to the financial portfolio optimization application")
+        label_01.setStyleSheet("""
             font-family: Arial, Helvetica, sans-serif;
             font-size: 20px;
             font-weight: bold;
             text-align: center;
             color: #CCC;
         """)
-        label_1.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(label_1)
+        label_01.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(label_01)
 
-        label_2 = QLabel("Here you can check the importance of specific assets.")
-        label_2.setStyleSheet("""
+        label_02 = QLabel("Here you can check the importance of specific assets.")
+        label_02.setStyleSheet("""
             font-family: Arial, Helvetica, sans-serif;
             font-size: 20px;
             font-weight: bold;
@@ -75,11 +77,13 @@ class HelpWindowPortfolio(QDialog):
             color: #CCC;
         """)
 
-        label_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(label_2)
-
-        spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        main_layout.addItem(spacer)
+        label_02.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(label_02)
+        
+        for key, value in self.asset_descriptions.items():
+            label = QLabel(f"<b>{key}</b>: {value}")
+            label.setWordWrap(True)
+            main_layout.addWidget(label)
 
         desc_label = QLabel("Note, you can add your own assets (check the yfinance library documentation for the name of the financial instrument)")
         main_layout.addWidget(desc_label)

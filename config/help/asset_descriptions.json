@@ -1,0 +1,10 @@
+{
+    "Asset Name": "The name of the asset (e.g., stock, bond, etc.)",
+    "Allocation": "The proportion of the total portfolio that the asset occupies.",
+    "Expected Return": "The anticipated return on investment for that asset.",
+    "Correlation": "The degree to which the asset's returns are related to the returns of other assets in the portfolio.",
+    "Risk": "A measure of the asset’s volatility or uncertainty regarding its returns.",
+    "Beta": "A measure of the asset's sensitivity to overall market movements (systematic risk).",
+    "Sharpe Ratio": "A measure of risk-adjusted return, calculated as the ratio of the asset’s excess return to its standard deviation.",
+    "Treynor Ratio": "Similar to the Sharpe Ratio but adjusted for the asset’s systematic risk (beta), calculating risk-adjusted returns."
+}
