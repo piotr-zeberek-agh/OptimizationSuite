@@ -1,0 +1,14 @@
+{
+    "method_name": "Simulated Annealing",
+    "description": "Simulated Annealing is a probabilistic technique used to approximate the global optimum of a given function. It is inspired by the annealing process in metallurgy, where materials are heated and then gradually cooled to remove defects. The algorithm explores the solution space and accepts new solutions based on probability, which depends on the temperature and the change in the objective function.",
+    "steps": "1. Start with an initial solution and initial temperature. 2. At each step, generate a neighboring solution by making a small change in the current solution. 3. If the new solution is better, accept it. If it's worse, accept it with a probability that decreases over time (temperature). 4. Gradually reduce the temperature according to a cooling schedule. 5. Repeat until the temperature is low enough or a stopping condition is met.",
+    "parameters": {
+      "initial_temperature": "The starting temperature, which controls the probability of accepting worse solutions at the beginning. Higher temperatures increase exploration.",
+      "cooling_schedule": "A function that determines how the temperature decreases over time, commonly using an exponential or linear decay.",
+      "iterations_per_temperature": "The number of steps or iterations to perform at each temperature level before reducing the temperature.",
+      "stopping_condition": "A stopping condition such as a maximum number of iterations, minimum temperature, or finding a solution within a certain tolerance."
+    },
+    "advantages": "Simulated Annealing is a global optimization method that helps avoid getting stuck in local minima, unlike methods like gradient descent.",
+    "disadvantages": "It can be computationally expensive due to the need to evaluate many potential solutions, especially when cooling is slow. It may also get stuck in local minima if the temperature is not controlled well or the cooling schedule is not ideal.",
+    "applications": "Traveling Salesman Problem (TSP), Knapsack Problem, Task Scheduling in manufacturing, Hyperparameter tuning in machine learning."
+  }

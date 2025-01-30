@@ -17,15 +17,17 @@ class HelpWindowPortfolio(QDialog):
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
 
-        self.stocks_help = self.load_help_data("config/help/stocks.json")
+        self.algorithm = self.load_help_data("config/algorithm.json")
+        path = "config/help_portfolio/"
+        self.asset_descriptions = self.load_help_data(path+"asset_descriptions.json")
+        self.stocks_help = self.load_help_data(path+"stocks.json")
+        self.bonds_help = self.load_help_data(path+"bonds.json")
+        self.commodities_help = self.load_help_data(path+"commodities.json")
+        self.etfs_help = self.load_help_data(path+"etfs.json")
+        self.currencies_help = self.load_help_data(path+"currencies.json")
+        self.indexes_help = self.load_help_data(path+"indexes.json")
 
-        self.asset_descriptions = self.load_help_data("config/help/asset_descriptions.json")
-        self.bonds_help = self.load_help_data("config/help/bonds.json")
-        self.commodities_help = self.load_help_data("config/help/commodities.json")
-        self.etfs_help = self.load_help_data("config/help/etfs.json")
-        self.currencies_help = self.load_help_data("config/help/currencies.json")
-        self.indexes_help = self.load_help_data("config/help/indexes.json")
-
+        self.add_algorithm_tab()
         self.add_main_tab()
         self.add_tab_stocks()
         self.add_tab_bonds()
@@ -34,6 +36,7 @@ class HelpWindowPortfolio(QDialog):
         self.add_tab_currencies()
         self.add_tab_indexes()
 
+        self.tab_widget.setCurrentIndex(1)
         layout.addWidget(self.tab_widget)
         self.setLayout(layout)
 
@@ -52,24 +55,37 @@ class HelpWindowPortfolio(QDialog):
             print(f"An error occurred: {e}")
             return None
 
+    def add_algorithm_tab(self):
+        """Adds the algorithm tab."""
+        main_tab = QWidget()
+        main_layout = QVBoxLayout()
+        
+        for key, value in self.algorithm.items():
+            label = QLabel(f"<b>{key}</b>: {value}")
+            label.setWordWrap(True)
+            main_layout.addWidget(label)
+        
+        main_tab.setLayout(main_layout)
+        self.tab_widget.addTab(main_tab, "Algorithm")
+        
     def add_main_tab(self):
         """Adds the main tab."""
         main_tab = QWidget()
         main_layout = QVBoxLayout()
 
-        label_01 = QLabel("Welcome to the financial portfolio optimization application")
-        label_01.setStyleSheet("""
+        label_1 = QLabel("Welcome to the financial portfolio optimization application")
+        label_1.setStyleSheet("""
             font-family: Arial, Helvetica, sans-serif;
             font-size: 20px;
             font-weight: bold;
             text-align: center;
             color: #CCC;
         """)
-        label_01.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(label_01)
+        label_1.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(label_1)
 
-        label_02 = QLabel("Here you can check the importance of specific assets.")
-        label_02.setStyleSheet("""
+        label_2 = QLabel("Here you can check the importance of specific assets.")
+        label_2.setStyleSheet("""
             font-family: Arial, Helvetica, sans-serif;
             font-size: 20px;
             font-weight: bold;
@@ -77,8 +93,8 @@ class HelpWindowPortfolio(QDialog):
             color: #CCC;
         """)
 
-        label_02.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(label_02)
+        label_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(label_2)
         
         for key, value in self.asset_descriptions.items():
             label = QLabel(f"<b>{key}</b>: {value}")

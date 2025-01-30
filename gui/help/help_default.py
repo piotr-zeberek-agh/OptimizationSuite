@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTabWidget, QWidget, QSpacerItem, QSizePolicy
 from PyQt6.QtCore import Qt
+import json
 
 class HelpWindowDefault(QDialog):
     """Window displaying information about the program with tabs."""
@@ -14,30 +15,37 @@ class HelpWindowDefault(QDialog):
         container = QWidget()
         container.setLayout(layout)
         self.tab_widget = QTabWidget()
-        layout.addWidget(self.tab_widget)
-        self.add_main_tab()
-        layout.addWidget(self.tab_widget)
 
+        self.algorithm = self.load_help_data("config/algorithm.json")
+        self.add_algorithm_tab()
+
+        layout.addWidget(self.tab_widget)
         self.setLayout(layout)
 
-    def add_main_tab(self):
-        """Adds the main tab."""
+    def load_help_data(self, file_path):
+        """Load JSON file with help data."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            print("File 'help.json' not found in 'config' directory.")
+            return None
+        except json.JSONDecodeError:
+            print("Error loading JSON file. It may be corrupted or in incorrect format.")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        
+    def add_algorithm_tab(self):
+        """Adds the algorithm tab."""
         main_tab = QWidget()
         main_layout = QVBoxLayout()
-
-        label_1 = QLabel("Window displaying general information about the program.")
-        label_1.setStyleSheet("""
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 20px;
-            font-weight: bold;
-            text-align: center;
-            color: #CCC;
-        """)
-        label_1.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(label_1)
-
-        spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        main_layout.addItem(spacer)
+        
+        for key, value in self.algorithm.items():
+            label = QLabel(f"<b>{key}</b>: {value}")
+            label.setWordWrap(True)
+            main_layout.addWidget(label)
         
         main_tab.setLayout(main_layout)
-        self.tab_widget.addTab(main_tab, "Main")
+        self.tab_widget.addTab(main_tab, "Algorithm")

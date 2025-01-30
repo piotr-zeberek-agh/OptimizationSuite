@@ -166,7 +166,7 @@ class MainWindow(QMainWindow):
             self.help_window = HelpWindowGradient(self)
         elif scenario_name == "Structure Of Fullerenes":
             self.help_window = HelpWindowFullerenes(self)
-        if scenario_name == "Portfolio Optimization":
+        elif scenario_name == "Portfolio Optimization":
             self.help_window = HelpWindowPortfolio(self)
         else:
             self.help_window = HelpWindowDefault(self)
