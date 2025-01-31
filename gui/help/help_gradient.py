@@ -17,11 +17,9 @@ class HelpWindowGradient(QDialog):
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
 
-        self.algorithm = self.load_help_data("config/algorithm.json")
         path = "config/help_gradient/"
         self.gradient_help = self.load_help_data(path+"help_gradient.json")
 
-        self.add_algorithm_tab()
         self.add_main_tab()
 
         self.tab_widget.setCurrentIndex(1)
@@ -42,26 +40,13 @@ class HelpWindowGradient(QDialog):
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
-        
-    def add_algorithm_tab(self):
-        """Adds the algorithm tab."""
-        main_tab = QWidget()
-        main_layout = QVBoxLayout()
-        
-        for key, value in self.algorithm.items():
-            label = QLabel(f"<b>{key}</b>: {value}")
-            label.setWordWrap(True)
-            main_layout.addWidget(label)
-        
-        main_tab.setLayout(main_layout)
-        self.tab_widget.addTab(main_tab, "Algorithm")
 
     def add_main_tab(self):
         """Adds the main tab."""
         main_tab = QWidget()
         main_layout = QVBoxLayout()
 
-        label_1 = QLabel("Gradient Descent: An algorithm that minimizes a function by following its steepest gradient.")
+        label_1 = QLabel("Gradient Descent: An algorithm that minimizes a function by following its steepest descent.")
         label_1.setStyleSheet("""
             font-family: Arial, Helvetica, sans-serif;
             font-size: 16px;

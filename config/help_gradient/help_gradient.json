@@ -1,13 +1,9 @@
 {
-    "Description": "The gradient descent algorithm is an optimization technique used to minimize a function by iteratively moving towards the steepest descent direction. The idea is to find the minimum of a function by updating the parameters (or variables) of the function in the opposite direction of the gradient, which points in the direction of the steepest increase. The algorithm continues updating the parameters until it converges to a local minimum or satisfies a stopping condition.",
-    "Steps": "1. Initialize the parameters (or variables) randomly or with some starting values. 2. Calculate the gradient of the function at the current point. The gradient is a vector that points in the direction of the greatest rate of increase of the function. 3. Update the parameters by moving in the opposite direction of the gradient by a step size determined by the learning rate. 4. Repeat steps 2 and 3 until the parameters converge to a minimum or the stopping condition is met.",
-    "Parameters": {
-      "Learning_Rate": "The step size used to move in the direction of the negative gradient. A small learning rate ensures small steps, whereas a large learning rate may cause the algorithm to overshoot the minimum.",
-      "Max_Iterations": "The maximum number of iterations the algorithm will run. If the function doesn't converge within this limit, the algorithm will stop.",
-      "Convergence_Tolerance": "The tolerance level for convergence. The algorithm will stop when the change in the function's value or parameters between iterations is smaller than this tolerance.",
-      "Momentum": "A parameter that helps accelerate the gradient descent in the relevant direction and dampens oscillations. It helps improve convergence speed, especially in more complex functions."
-    },
-    "Advantages": "Gradient descent is a simple and efficient optimization method that can handle high-dimensional spaces and complex functions. It is widely used in machine learning and neural networks for training models.",
-    "Disadvantages": "Gradient descent may converge to local minima instead of the global minimum, especially for non-convex functions. It is also sensitive to the choice of the learning rate, and a poor choice can lead to slow convergence or divergence.",
-    "Applications": "Gradient descent is used in various optimization tasks, including training machine learning models, minimizing error functions in regression, and optimizing parameters in deep learning algorithms."
-  }
+  "Description": "The gradient descent algorithm is an optimization technique used to minimize a function by iteratively moving towards the steepest descent direction. The idea is to find the minimum of a function by updating the parameters (or variables) of the function in the opposite direction of the gradient, which points in the direction of the steepest increase. The algorithm continues updating the parameters until it converges to a local minimum or satisfies a stopping condition.",
+  "Steps": "Initialize the variables with starting values. Calculate the gradient of the function at the current point. Update the variables by moving in the opposite direction of the gradient multiplied by learning rate. Repeat until the parameters converge to a minimum or the stopping condition is met.",
+  "No. independent variables": "Number of independent variables used in the function to be minimized.",
+  "Learning rate": "Controls the step size during the optimization process. It determines how much the model adjusts its parameters in response to the gradient. ",
+  "Max iter": "Specifies the maximum number of iterations the algorithm will run for.",
+  "Convergence": "Refers to the difference between values in two consecutive iterations that is used as a criterion to determine whether the optimal solution has been reached.",
+  "Formula": "Represents a mathematical expression or function to be minimized using the gradient descent algorithm."
+}

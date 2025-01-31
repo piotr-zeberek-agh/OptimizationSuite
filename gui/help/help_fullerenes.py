@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTabWidget, QWidget, QSpacerItem, QSizePolicy
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTabWidget, QWidget
 from PyQt6.QtCore import Qt
 import json
 
@@ -17,11 +17,9 @@ class HelpWindowFullerenes(QDialog):
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
 
-        self.algorithm = self.load_help_data("config/algorithm.json")
         path = "config/help_fullerenes/"
         self.fullerenes_help = self.load_help_data(path+"help_fullerenes.json")
 
-        self.add_algorithm_tab()
         self.add_main_tab()
 
         self.tab_widget.setCurrentIndex(1) 
@@ -43,25 +41,12 @@ class HelpWindowFullerenes(QDialog):
             print(f"An error occurred: {e}")
             return None
         
-    def add_algorithm_tab(self):
-        """Adds the algorithm tab."""
-        main_tab = QWidget()
-        main_layout = QVBoxLayout()
-        
-        for key, value in self.algorithm.items():
-            label = QLabel(f"<b>{key}</b>: {value}")
-            label.setWordWrap(True)
-            main_layout.addWidget(label)
-        
-        main_tab.setLayout(main_layout)
-        self.tab_widget.addTab(main_tab, "Algorithm")
-
     def add_main_tab(self):
         """Adds the main tab."""
         main_tab = QWidget()
         main_layout = QVBoxLayout()
 
-        label_1 = QLabel("Fullerenes: Carbon molecules with hexagonal and pentagonal rings forming spherical or cylindrical shapes.")
+        label_1 = QLabel("Fullerenes: Carbon ball-shaped molecules with hexagonal and pentagonal rings.")
         label_1.setStyleSheet("""
             font-family: Arial, Helvetica, sans-serif;
             font-size: 16px;
@@ -71,15 +56,6 @@ class HelpWindowFullerenes(QDialog):
         """)
         label_1.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(label_1)
-
-        label_2 = QLabel("Here you can check the importance of specific assets.")
-        label_2.setStyleSheet("""
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 20px;
-            font-weight: bold;
-            text-align: center;
-            color: #CCC;
-        """)
 
         for key, value in self.fullerenes_help.items():
             label = QLabel(f"<b>{key}</b>: {value}")
